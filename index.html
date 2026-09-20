@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DP JARVIS // Dynamic Positioning AI Copilot</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Bridge Telemetry & Global Controls Header -->
+  <header class="hud-header">
+    <div class="header-main">
+      <div class="brand-group">
+        <div class="colleague-badge" title="Logged in as Rahul">
+          <span class="colleague-avatar">👨‍💼</span>
+          <span class="colleague-name">Rahul</span>
+        </div>
+        <div class="arc-logo">
+          <div class="arc-ring-mini"></div>
+          <div class="arc-dot-mini"></div>
+        </div>
+        <div>
+          <h1 class="brand-title">DP JARVIS <span class="version-tag">PRO // V3.2</span></h1>
+          <div class="brand-sub">DYNAMIC POSITIONING BRIDGE COPILOT &bull; CLASS DP-2 / DP-3</div>
+        </div>
+      </div>
+
+      <div class="global-controls">
+        <!-- Voice Mode Master Switch -->
+        <div class="control-card" id="card-voice-mode">
+          <span class="control-label">VOICE MODE</span>
+          <button id="toggle-voice-mode-btn" class="toggle-switch-btn active" title="Toggle Jarvis Voice Mode (or say 'Jarvis, voice mode on/off')">
+            <span class="switch-bulb"></span>
+            <span id="voice-mode-text">VOICE ON</span>
+          </button>
+        </div>
+
+        <!-- Microphone Listening / Hearing Switch -->
+        <div class="control-card" id="card-mic-mode">
+          <span class="control-label">JARVIS HEARING</span>
+          <button id="toggle-mic-btn" class="toggle-switch-btn active" title="Toggle Hearing (or say 'Jarvis, mute' / 'stop listening')">
+            <span class="mic-icon">🎙️</span>
+            <span id="mic-status-text">LISTENING</span>
+          </button>
+        </div>
+
+        <!-- Speaker Audio Switch -->
+        <div class="control-card">
+          <span class="control-label">SPEECH SYNTH</span>
+          <button id="toggle-speech-btn" class="toggle-switch-btn active" title="Toggle Spoken Replies">
+            <span id="speech-icon">🔊</span>
+            <span id="speech-status-text">AUDIO ON</span>
+          </button>
+        </div>
+
+        <!-- Evidence Library Button -->
+        <button id="open-drawer-btn" class="hud-pill-btn" title="Inspect IMCA, MTS & OEM Citations">
+          📚 Evidence Library
+        </button>
+      </div>
+    </div>
+
+    <!-- Vessel Dynamic Telemetry Strip -->
+    <div class="telemetry-bar">
+      <div class="telem-item">
+        <span class="telem-key">OPERATION MODE:</span>
+        <span class="telem-val neon-cyan">AUTO DP (DP-2)</span>
+      </div>
+      <div class="telem-item">
+        <span class="telem-key">ASOG / CAMO:</span>
+        <span id="camo-badge" class="telem-val badge-green">CAMO GREEN</span>
+      </div>
+      <div class="telem-item">
+        <span class="telem-key">POSITION REFERENCES:</span>
+        <span id="prs-indicator" class="telem-val neon-cyan">DGPS-1, DGPS-2, CYSCAN, RADASCAN</span>
+      </div>
+      <div class="telem-item">
+        <span class="telem-key">GYRO HEADING:</span>
+        <span id="gyro-indicator" class="telem-val">042.8°T [VOTING OK]</span>
+      </div>
+      <div class="telem-item">
+        <span class="telem-key">REL WIND:</span>
+        <span id="wind-indicator" class="telem-val">19.4 KTS / 080°</span>
+      </div>
+      <div class="telem-item">
+        <span class="telem-key">BUS STATUS:</span>
+        <span class="telem-val">6.6kV TIED [CAMO OK]</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Layout: Bridge HUD -->
+  <main class="hud-container">
+    
+    <!-- Left Column: Holographic Core & Quick Diagnostics -->
+    <section class="left-panel">
+      <!-- Jarvis Arc Reactor / Neural Visualizer -->
+      <div class="reactor-module" id="reactor-container" title="Click to Toggle Microphone Listening">
+        <div class="reactor-glass">
+          <div class="reactor-ring outer-ring"></div>
+          <div class="reactor-ring middle-ring"></div>
+          <div class="reactor-ring inner-ring"></div>
+          <div class="reactor-core" id="reactor-core">
+            <div class="core-glow"></div>
+            <div class="core-symbol">JP</div>
+          </div>
+          <div class="audio-wave-wrap">
+            <canvas id="audio-wave-canvas" width="220" height="40"></canvas>
+          </div>
+        </div>
+        <div class="reactor-status" id="reactor-status-label">JARVIS ONLINE // LISTENING</div>
+        <div class="voice-tip">Say: "Jarvis, voice mode on/off" &bull; "Jarvis, mute" &bull; Or click Core</div>
+      </div>
+
+      <!-- Quick Scenario Launchers -->
+      <div class="scenarios-module">
+        <div class="module-title">⚡ QUICK OPERATIONAL & SERVICE BENCHMARKS</div>
+        <div class="scenario-buttons">
+          <button class="btn-scenario scenario-urgent" data-query="Currently my two relative references CyScan and RadaScan are not working and I am on a DP operation inside the 500m zone. There is two reference missing. What to do?">
+            🚨 <strong>OPERATIONAL:</strong> 2 References Missing (CyScan & RadaScan)
+          </button>
+          
+          <button class="btn-scenario scenario-service" data-query="The CyScan rotor motor is rotating and all other parts are working, but no target is acquired. What could be the possible service issue?">
+            🛠️ <strong>SERVICE:</strong> CyScan Motor Rotating but No Target
+          </button>
+
+          <button class="btn-scenario" data-query="Diagnose thruster 3 pitch runaway and drive-off threat on Kongsberg K-Pos DP-2">
+            ⚙️ <strong>FMEA:</strong> Thruster Pitch Runaway & Drive-Off
+          </button>
+
+          <button class="btn-scenario" data-query="Dual Gyrocompass disagreement under heavy weather in CAMO mode">
+            🧭 <strong>SENSORS:</strong> Dual Gyro Disagreement in CAMO
+          </button>
+
+          <button class="btn-scenario" data-query="High-voltage bus-tie breaker inadvertent open trip under DP load">
+            ⚡ <strong>POWER:</strong> HV Bus-Tie Trip During Operation
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Center Column: Terminal Feed & Voice Chat -->
+    <section class="center-panel">
+      <!-- Conversation Message Stream -->
+      <div class="chat-terminal" id="chat-messages">
+        <!-- Dynamic conversation items will be appended here -->
+      </div>
+
+      <!-- Live Voice Subtitle Bar -->
+      <div class="voice-transcript-banner" id="voice-transcript-banner">
+        <span class="transcript-prefix">HEARING:</span>
+        <span class="transcript-content" id="transcript-live-text">Ready for voice command...</span>
+      </div>
+
+      <!-- Command Input Bar -->
+      <div class="command-bar">
+        <button id="mic-toggle-btn" class="mic-action-btn listening" title="Click to Toggle Mic">
+          <span class="mic-wave"></span>
+          🎤
+        </button>
+        <input type="text" id="command-input" class="hud-input" placeholder="Ask Jarvis anything about DP operations, alarms, or component-level service troubleshooting..." autocomplete="off">
+        <button id="send-btn" class="send-action-btn">
+          SEND &rarr;
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Slide-out Evidence & Citations Drawer -->
+  <aside class="evidence-drawer" id="evidence-drawer">
+    <div class="drawer-header">
+      <div>
+        <h3>EVIDENCE & REGULATORY REPOSITORY</h3>
+        <p>Grounding citations: IMCA, MTS TECHOP, Class Rules & OEM Manuals</p>
+      </div>
+      <button id="close-drawer-btn" class="drawer-close">&times;</button>
+    </div>
+
+    <div class="drawer-filters">
+      <input type="text" id="drawer-search" placeholder="Filter citations by keyword (e.g. CyScan, IMCA M 103, FMEA)...">
+      <div class="filter-pills">
+        <button class="filter-pill active" data-cat="all">All</button>
+        <button class="filter-pill" data-cat="imca">IMCA</button>
+        <button class="filter-pill" data-cat="mts">MTS TECHOP</button>
+        <button class="filter-pill" data-cat="cyscan">CyScan / Radar</button>
+        <button class="filter-pill" data-cat="kongsberg">Kongsberg</button>
+        <button class="filter-pill" data-cat="class">Class Rules</button>
+      </div>
+    </div>
+
+    <div class="drawer-content" id="drawer-citations-list">
+      <!-- Citations dynamically loaded -->
+    </div>
+  </aside>
+
+  <!-- Audio Element for sound cues -->
+  <audio id="audio-beep" preload="auto"></audio>
+
+  <!-- Scripts -->
+  <script src="knowledge.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
