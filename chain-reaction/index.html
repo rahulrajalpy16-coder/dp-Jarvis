@@ -51,28 +51,28 @@ button{font:inherit;color:inherit}
 h1{margin:0;font-size:clamp(46px,14vw,76px);line-height:.88;font-weight:800;letter-spacing:-.035em;text-wrap:balance}
 h1 .hot{background:linear-gradient(90deg,#ff4d5e,#ffd23f 35%,#38d97a 65%,#4f8cff);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lede{margin:0;color:var(--muted);line-height:1.5;max-width:42ch}
-.block{display:grid;gap:12px}
+.block{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .block-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 h2{margin:0;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .stepper{display:flex;align-items:center;gap:4px;padding:3px;border-radius:999px;background:var(--panel);border:1px solid var(--line)}
 .stepper button{width:36px;height:36px;border:0;border-radius:50%;background:var(--raise);font-size:20px;line-height:1;cursor:pointer}
 .stepper button:disabled{opacity:.3;cursor:default}
 .stepper output{min-width:2.2ch;text-align:center;font-family:var(--font-mono);font-weight:700;font-size:17px}
-.plist{display:grid;gap:8px}
+.plist{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .prow{display:flex;align-items:center;gap:10px;padding:6px 6px 6px 12px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line)}
 .swatch{width:18px;height:18px;flex:none;border-radius:50%;
   background:radial-gradient(circle at 34% 30%,#fff 0 8%,var(--c) 45%,color-mix(in srgb,var(--c) 50%,#000) 100%);
   box-shadow:0 0 10px color-mix(in srgb,var(--c) 60%,transparent)}
-.pname{flex:1;min-width:0;padding:8px 2px;border:0;border-bottom:1px dashed transparent;background:transparent;color:var(--text);font:inherit;font-size:16px;font-weight:600}
+.pname{flex:1;min-width:0;width:0;padding:8px 2px;border:0;border-bottom:1px dashed transparent;background:transparent;color:var(--text);font:inherit;font-size:16px;font-weight:600}
 .pname:focus{outline:none;border-bottom-color:var(--c)}
 .seg{display:flex;flex:none;padding:3px;border-radius:999px;background:var(--ink)}
 .seg button{padding:7px 11px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--raise);color:var(--text)}
 .hint{margin:0;font-size:13px;color:var(--muted)}
-.sizes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-@media (max-width:420px){.sizes{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.size{display:grid;gap:2px;justify-items:start;padding:12px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);cursor:pointer;text-align:left}
-.size b{font-family:var(--font-mono);font-size:16px;font-variant-numeric:tabular-nums}
+.sizes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.sizes{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.size{display:grid;gap:2px;justify-items:start;padding:11px 10px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);cursor:pointer;text-align:left}
+.size b{font-family:var(--font-mono);font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .size span{font-size:12px;color:var(--muted)}
 .size[aria-pressed="true"]{border-color:var(--text);background:var(--raise)}
 .opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);cursor:pointer}
@@ -245,10 +245,12 @@ const COLORS = [
 ];
 const NAMES = COLORS.map(c => c.name);
 const SIZES = [
-  {id:"s",  label:"Classic", rows:9,  cols:6},
-  {id:"m",  label:"Medium",  rows:12, cols:8},
-  {id:"l",  label:"Large",   rows:16, cols:10},
-  {id:"xl", label:"Huge",    rows:20, cols:12}
+  {id:"s",   label:"Classic", rows:9,  cols:6},
+  {id:"m",   label:"Large",   rows:12, cols:8},
+  {id:"l",   label:"HD",      rows:16, cols:10},
+  {id:"xl",  label:"XL",      rows:20, cols:12},
+  {id:"xxl", label:"XXL",     rows:24, cols:14},
+  {id:"max", label:"Max",     rows:28, cols:16}
 ];
 const reduceMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 const $ = s => document.querySelector(s);
@@ -259,13 +261,13 @@ const store = {
   get(){ try { return JSON.parse(localStorage.getItem("chain-reaction-setup") || "null"); } catch (e) { return null; } },
   set(v){ try { localStorage.setItem("chain-reaction-setup", JSON.stringify(v)); } catch (e) {} }
 };
-const setup = { count:4, names:NAMES.slice(), cpu:new Array(8).fill(false), size:"m", sound:true };
+const setup = { count:4, names:NAMES.slice(), cpu:new Array(8).fill(false), size:"xxl", sound:true, v:2 };
 function loadSetup(saved){
   if (!saved || typeof saved !== "object") return;
   if (Number.isInteger(saved.count)) setup.count = Math.min(8, Math.max(2, saved.count));
   if (Array.isArray(saved.names)) saved.names.slice(0, 8).forEach((n, k) => { if (typeof n === "string") setup.names[k] = n.slice(0, 14); });
   if (Array.isArray(saved.cpu)) saved.cpu.slice(0, 8).forEach((v, k) => { setup.cpu[k] = !!v; });
-  if (SIZES.some(s => s.id === saved.size)) setup.size = saved.size;
+  if (saved.v === 2 && SIZES.some(s => s.id === saved.size)) setup.size = saved.size;
   if (typeof saved.sound === "boolean") setup.sound = saved.sound;
 }
 
@@ -419,7 +421,7 @@ function renderSetup(){
     list.appendChild(row);
   }
   $("#sizes").innerHTML = SIZES.map(s =>
-    `<button type="button" class="size" data-size="${s.id}" aria-pressed="${s.id === setup.size}"><b>${s.cols} &times; ${s.rows}</b><span>${s.label}</span></button>`
+    `<button type="button" class="size" data-size="${s.id}" aria-pressed="${s.id === setup.size}"><b>${s.cols}&times;${s.rows}</b><span>${s.label}</span></button>`
   ).join("");
   $("#soundOpt").checked = setup.sound;
 }
@@ -698,7 +700,7 @@ function draw(now){
   ctx.restore();
 
   if (flash) {
-    const k = (now - flash.t) / 450;
+    const k = Math.max(0, (now - flash.t) / 450);
     if (k >= 1) flash = null;
     else {
       ctx.strokeStyle = `rgba(255,107,107,${1 - k})`;
@@ -715,7 +717,8 @@ function draw(now){
   }
 
   if (anim) {
-    const k = Math.min(1, (now - anim.start) / anim.dur), e = 1 - Math.pow(1 - k, 3);
+    // rAF timestamps can trail performance.now(), so clamp the start of a wave
+    const k = Math.min(1, Math.max(0, (now - anim.start) / anim.dur)), e = 1 - Math.pow(1 - k, 3);
     const R = L.orbR, spr = sprites[anim.p];
     ctx.strokeStyle = P[anim.p].color;
     ctx.lineWidth = 2;
