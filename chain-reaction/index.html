@@ -2096,7 +2096,19 @@ function backupFileName(){
   return `chain-reaction-${dev}-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
 }
 function markBackedUp(){ meta.lastBackup = Date.now(); saveMeta(); unlock("backup"); if (sheetKind === "data") renderSheet(); }
-function downloadBackup(){
+async function downloadBackup(){
+  // Inside a Claude artifact, files go through the viewer's save prompt; elsewhere a plain download works.
+  const viewer = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads").catch(() => null) : null;
+  if (viewer) {
+    try {
+      await viewer.save({ filename:backupFileName(), data:JSON.stringify(makeBackup()) });
+      markBackedUp();
+      toast("Backup saved");
+    } catch (e) {
+      if (!e || e.code !== "declined") toast("Saving a file did not work here. Use Copy backup code instead.");
+    }
+    return;
+  }
   const blob = new Blob([JSON.stringify(makeBackup())], { type:"application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = backupFileName();
