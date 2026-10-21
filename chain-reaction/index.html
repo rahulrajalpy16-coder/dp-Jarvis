@@ -1,0 +1,1244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- APP:HEAD -->
+<title>Chain Reaction</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Pass-and-play Chain Reaction for 2 to 8 players on one phone.">
+<meta name="theme-color" content="#0a0c13">
+<link rel="manifest" href="manifest.webmanifest" data-pwa>
+<link rel="icon" href="icons/icon-192.png" type="image/png" data-pwa>
+<link rel="apple-touch-icon" href="icons/icon-192.png" data-pwa>
+<meta name="mobile-web-app-capable" content="yes" data-pwa>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen app. A setup sheet, then a board that fills the screen between a turn bar and a player rail.
+   The app chrome is a single dark look by choice; the board itself takes whatever colours the players pick. */
+:root{
+  --ink:#0a0c13;
+  --panel:#131725;
+  --raise:#1c2134;
+  --line:#272e45;
+  --text:#eceff7;
+  --muted:#8e96b0;
+  --pc:#ff4d5e;
+  --font-display:"Bricolage Grotesque","Segoe UI",Roboto,system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:12px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{height:100%;background:var(--ink);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{
+  height:100%;margin:0;overflow:hidden;
+  background:var(--ink);color:var(--text);
+  font-family:var(--font-display);font-size:15px;
+  -webkit-tap-highlight-color:transparent;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.screen{height:100%;display:flex;flex-direction:column}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- shared controls ---------- */
+h2{margin:0;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:14px;border:1px solid var(--line);background:var(--raise);color:var(--text);font-size:16px;font-weight:700;cursor:pointer}
+.btn.primary{border-color:transparent;background:var(--text);color:var(--ink)}
+.btn.ghost{background:transparent}
+.btn.big{min-height:56px;font-size:18px}
+.btn.small{min-height:38px;padding:0 16px;font-size:15px;border-radius:12px}
+.seg{display:flex;flex:none;padding:3px;border-radius:999px;background:var(--ink)}
+.seg button{padding:7px 11px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--raise);color:var(--text)}
+.seg.wide{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);border-radius:12px}
+.seg.wide button{border-radius:9px;padding:9px 4px}
+.stepper{display:flex;align-items:center;gap:4px;padding:3px;border-radius:999px;background:var(--panel);border:1px solid var(--line)}
+.stepper button{width:36px;height:36px;border:0;border-radius:50%;background:var(--raise);font-size:20px;line-height:1;cursor:pointer}
+.stepper button:disabled{opacity:.3;cursor:default}
+.stepper output{min-width:2.4ch;text-align:center;font-family:var(--font-mono);font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);cursor:pointer}
+.opt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.opt input{width:20px;height:20px;flex:none;accent-color:#38d97a}
+.swatches{display:flex;flex-wrap:wrap;gap:9px}
+.sw{position:relative;width:34px;height:34px;flex:none;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.14);background:var(--c);cursor:pointer}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--text)}
+.sw-custom{display:inline-block;overflow:hidden;background:conic-gradient(#ff4d5e,#ffd23f,#38d97a,#2fe0e0,#4f8cff,#b06bff,#ff4d5e)}
+.sw-custom input{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);opacity:0;border:0;padding:0;cursor:pointer}
+.sw-custom.is-on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--text)}
+
+/* ---------- setup ---------- */
+#setup{overflow-y:auto;overscroll-behavior:contain;padding-block:24px 32px}
+.sheet{width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.brand{display:grid;gap:12px}
+.atom{width:58px;height:58px;position:relative;animation:spin 1.4s linear infinite}
+.atom i{position:absolute;width:26px;height:26px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#fff 0 7%,var(--c) 42%,color-mix(in srgb,var(--c) 50%,#000) 100%);
+  box-shadow:0 0 14px color-mix(in srgb,var(--c) 55%,transparent)}
+.atom i:nth-child(1){left:16px;top:2px}
+.atom i:nth-child(2){left:3px;top:26px}
+.atom i:nth-child(3){left:29px;top:26px}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{margin:0;font-size:clamp(46px,14vw,76px);line-height:.88;font-weight:800;letter-spacing:-.035em;text-wrap:balance}
+h1 .hot{background:linear-gradient(90deg,#ff4d5e,#ffd23f 35%,#38d97a 65%,#4f8cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{margin:0;color:var(--muted);line-height:1.5;max-width:42ch}
+.block{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.block-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.plist{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.prow{display:grid;gap:10px;padding:6px 6px 6px 8px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line)}
+.prow-main{display:flex;align-items:center;gap:10px;min-width:0}
+.swatch{width:32px;height:32px;flex:none;padding:0;border:0;border-radius:50%;cursor:pointer;
+  background:radial-gradient(circle at 34% 30%,#fff 0 7%,var(--c) 45%,color-mix(in srgb,var(--c) 50%,#000) 100%);
+  box-shadow:0 0 10px color-mix(in srgb,var(--c) 55%,transparent)}
+.swatch[aria-expanded="true"]{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--c)}
+.pname{flex:1;min-width:0;width:0;padding:8px 2px;border:0;border-bottom:1px dashed transparent;background:transparent;color:var(--text);font:inherit;font-size:16px;font-weight:600}
+.pname:focus{outline:none;border-bottom-color:var(--c)}
+.palette{padding:2px 4px 6px}
+.hint{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
+.sub-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sub-row > span{font-weight:600}
+.sizes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.sizes{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.size{display:grid;gap:2px;justify-items:start;padding:11px 10px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);cursor:pointer;text-align:left}
+.size b{font-family:var(--font-mono);font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.size span{font-size:12px;color:var(--muted)}
+.size[aria-pressed="true"]{border-color:var(--text);background:var(--raise)}
+.size.custom{grid-column:1/-1;grid-auto-flow:column;justify-content:space-between;align-items:center}
+.custom-size{display:grid;gap:10px;padding:12px 14px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line)}
+.start-row{display:grid;gap:10px}
+.rules{border-top:1px solid var(--line);padding-top:16px;color:var(--muted);line-height:1.55}
+.rules summary{cursor:pointer;color:var(--text);font-weight:700}
+.rules ol{margin:12px 0 0;padding-left:20px;display:grid;gap:6px;max-width:62ch}
+.rules b{color:var(--text)}
+
+/* ---------- game ---------- */
+#game{gap:10px;padding-block:10px 12px}
+.bar{display:flex;align-items:center;gap:8px;flex:none}
+.turn{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:6px 14px 6px 7px;border-radius:999px;
+  background:color-mix(in srgb,var(--pc) 16%,var(--panel));border:1px solid color-mix(in srgb,var(--pc) 50%,transparent);
+  transition:background .25s,border-color .25s}
+.turn .dot{width:28px;height:28px;flex:none;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#fff 0 7%,var(--pc) 45%,color-mix(in srgb,var(--pc) 50%,#000) 100%);
+  box-shadow:0 0 14px color-mix(in srgb,var(--pc) 60%,transparent)}
+.turn .txt{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+#turnName{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#turnNote{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.moveno{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;padding:4px 8px;border-radius:8px;background:var(--panel)}
+.icon-btn{height:42px;min-width:42px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:14px;font-weight:600;cursor:pointer}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.icon-btn svg{width:20px;height:20px;flex:none}
+@media (max-width:420px){.moveno,.undo-label{display:none}}
+#stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+#board{display:block;touch-action:manipulation;cursor:pointer}
+.rail{flex:none;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-size:13px;white-space:nowrap;transition:background .2s,border-color .2s,opacity .2s}
+.chip .dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.chip .ct{font-family:var(--font-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.is-turn{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--panel))}
+.chip.is-out{opacity:.45}
+.chip.is-out .nm{text-decoration:line-through}
+
+/* ---------- overlays ---------- */
+.overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(6,7,12,.74);backdrop-filter:blur(6px);
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.card{width:100%;max-width:360px;display:grid;gap:10px;padding:26px 22px 22px;border-radius:20px;background:var(--panel);border:1px solid var(--line);text-align:center}
+.card h2,.panel-head h2{font-size:28px;letter-spacing:-.02em;text-transform:none;color:var(--text);font-weight:800;text-wrap:balance}
+.card p{margin:0;color:var(--muted);line-height:1.5}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.win-orb{width:84px;height:84px;margin:0 auto 6px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#fff 0 7%,var(--wc) 45%,color-mix(in srgb,var(--wc) 50%,#000) 100%);
+  box-shadow:0 0 40px color-mix(in srgb,var(--wc) 60%,transparent);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.card .btn.primary{background:var(--wc,var(--text));color:#0a0c13}
+.actions{display:grid;gap:8px;margin-top:10px}
+.sheet-ov{place-items:stretch}
+.panel{width:100%;max-width:560px;height:100%;justify-self:center;display:flex;flex-direction:column;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.panel-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px 12px 18px;border-bottom:1px solid var(--line)}
+.panel-head h2{font-size:22px}
+.preview-wrap{flex:none;height:clamp(110px,22vh,170px);display:flex;align-items:center;justify-content:center;padding:12px;background:var(--pbg,#0a0c13);border-bottom:1px solid var(--line)}
+.panel-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr);gap:26px;align-content:start}
+.group{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.field{display:grid;gap:8px}
+.field-label{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-weight:600}
+.field-label output{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.field.is-off{opacity:.4}
+input[type="range"]{width:100%;accent-color:#eceff7}
+.toast{position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:30;max-width:calc(100% - 32px);
+  padding:9px 16px;border-radius:999px;background:var(--raise);border:1px solid var(--line);font-size:14px;
+  transform:translate(-50%,8px);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.atom,.win-orb{animation:none}.toast,.turn,.chip{transition:none}}
+</style>
+<!-- APP:HEAD-END -->
+</head>
+<body>
+<!-- APP:BODY -->
+<section id="setup" class="screen" aria-labelledby="title">
+  <div class="sheet">
+    <header class="brand">
+      <div class="atom" aria-hidden="true"><i style="--c:#ff4d5e"></i><i style="--c:#ff4d5e"></i><i style="--c:#ff4d5e"></i></div>
+      <h1 id="title">Chain <span class="hot">Reaction</span></h1>
+      <p class="lede">Pass one phone around the table. Fill cells with orbs until they burst, steal your friends' cells, and be the last colour left on the board.</p>
+    </header>
+
+    <section class="block" aria-labelledby="playersH">
+      <div class="block-head">
+        <h2 id="playersH">Players</h2>
+        <div class="stepper">
+          <button type="button" id="minus" aria-label="Remove a player">&minus;</button>
+          <output id="pcount" aria-live="polite">4</output>
+          <button type="button" id="plus" aria-label="Add a player">+</button>
+        </div>
+      </div>
+      <div id="plist" class="plist"></div>
+      <p class="hint">Tap a colour dot to recolour a player. Tap a name to rename it. Switch a seat to CPU to let the phone play it.</p>
+      <div class="sub-row">
+        <span>CPU difficulty</span>
+        <div class="seg" id="cpuLevel" role="group" aria-label="CPU difficulty">
+          <button type="button" data-v="easy">Easy</button>
+          <button type="button" data-v="normal">Normal</button>
+          <button type="button" data-v="hard">Hard</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="boardH">
+      <h2 id="boardH">Board</h2>
+      <div id="sizes" class="sizes"></div>
+      <div id="customSize" class="custom-size" hidden>
+        <div class="sub-row"><span>Columns</span>
+          <div class="stepper"><button type="button" data-dim="customCols" data-d="-1" aria-label="Fewer columns">&minus;</button><output id="colsOut">14</output><button type="button" data-dim="customCols" data-d="1" aria-label="More columns">+</button></div>
+        </div>
+        <div class="sub-row"><span>Rows</span>
+          <div class="stepper"><button type="button" data-dim="customRows" data-d="-1" aria-label="Fewer rows">&minus;</button><output id="rowsOut">24</output><button type="button" data-dim="customRows" data-d="1" aria-label="More rows">+</button></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="start-row">
+      <button type="button" id="startBtn" class="btn primary big">Start game</button>
+      <button type="button" id="customizeBtn" class="btn">Customize look and feel</button>
+      <button type="button" id="installBtn" class="btn ghost" hidden>Install as app</button>
+    </div>
+
+    <details class="rules">
+      <summary>How to play</summary>
+      <ol>
+        <li>Players take turns. On your turn, tap an <b>empty cell</b> or a cell that already has <b>your orbs</b>.</li>
+        <li>Every cell has a limit. A <b>corner</b> holds 1 orb, an <b>edge</b> holds 2, and a <b>middle</b> cell holds 3.</li>
+        <li>Add one more and the cell <b>explodes</b>. It throws one orb into each neighbouring cell and turns those cells your colour.</li>
+        <li>Explosions can set off more explosions, so one tap can flip half the board.</li>
+        <li>Once everyone has played, a player with no orbs left is <b>out</b>. The last colour standing wins.</li>
+      </ol>
+    </details>
+  </div>
+</section>
+
+<section id="game" class="screen" hidden>
+  <header class="bar">
+    <div class="turn" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span>
+      <div class="txt"><b id="turnName">Red</b><span id="turnNote">your move</span></div>
+    </div>
+    <span id="moveNo" class="moveno">Move 0</span>
+    <button type="button" id="soundBtn" class="icon-btn" aria-label="Sound" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path id="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l5 6M21 9l-5 6" hidden/></svg>
+    </button>
+    <button type="button" id="undoBtn" class="icon-btn" aria-label="Undo last move">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+      <span class="undo-label">Undo</span>
+    </button>
+    <button type="button" id="menuBtn" class="icon-btn" aria-label="Game menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </header>
+  <div id="stage"><canvas id="board" role="img" aria-label="Game board"></canvas></div>
+  <footer id="rail" class="rail" aria-label="Players and orb counts"></footer>
+</section>
+
+<div id="winOv" class="overlay" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <div class="win-orb" aria-hidden="true"></div>
+    <p class="eyebrow">Last colour standing</p>
+    <h2 id="winTitle">Red wins</h2>
+    <p id="winStats"></p>
+    <div class="actions">
+      <button type="button" id="againBtn" class="btn primary">Play again</button>
+      <button type="button" id="winUndoBtn" class="btn">Undo last move</button>
+      <button type="button" id="winSetupBtn" class="btn ghost">Change players</button>
+    </div>
+  </div>
+</div>
+
+<div id="menuOv" class="overlay" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+    <h2 id="menuTitle">Paused</h2>
+    <p>Restarting or leaving clears the current board.</p>
+    <div class="actions">
+      <button type="button" id="resumeBtn" class="btn primary">Keep playing</button>
+      <button type="button" id="menuCustomBtn" class="btn">Customize look and feel</button>
+      <button type="button" id="restartBtn" class="btn">Restart with same players</button>
+      <button type="button" id="leaveBtn" class="btn ghost">Back to setup</button>
+    </div>
+  </div>
+</div>
+
+<div id="customOv" class="overlay sheet-ov" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="customTitle">
+    <header class="panel-head">
+      <h2 id="customTitle">Customize</h2>
+      <button type="button" id="customDone" class="btn primary small">Done</button>
+    </header>
+    <div class="preview-wrap" id="previewWrap"><canvas id="preview" aria-label="Preview of the board with your settings"></canvas></div>
+    <div class="panel-body">
+
+      <section class="group" aria-labelledby="gGrid">
+        <h2 id="gGrid">Grid</h2>
+        <div class="field">
+          <span class="field-label">Grid colour</span>
+          <div class="seg wide" data-set="gridMode" role="group" aria-label="Grid colour mode">
+            <button type="button" data-v="fixed">One colour</button>
+            <button type="button" data-v="player">Follows player</button>
+          </div>
+        </div>
+        <div class="field" id="gridColorField">
+          <div class="swatches" data-set="gridColor" data-list="grid" role="group" aria-label="Grid colour"></div>
+        </div>
+        <div class="field">
+          <span class="field-label">Line thickness</span>
+          <div class="seg wide" data-set="gridWidth" role="group" aria-label="Line thickness">
+            <button type="button" data-v="thin">Thin</button>
+            <button type="button" data-v="normal">Normal</button>
+            <button type="button" data-v="bold">Bold</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="gridOpacity">Line brightness <output data-out="gridOpacity"></output></label>
+          <input type="range" id="gridOpacity" data-set="gridOpacity" min="15" max="100" step="5">
+        </div>
+        <label class="opt" for="gridGlow"><span>Glowing lines</span><input type="checkbox" id="gridGlow" data-set="gridGlow"></label>
+      </section>
+
+      <section class="group" aria-labelledby="gBg">
+        <h2 id="gBg">Board background</h2>
+        <div class="swatches" data-set="boardBg" data-list="bg" role="group" aria-label="Board background"></div>
+      </section>
+
+      <section class="group" aria-labelledby="gOrbs">
+        <h2 id="gOrbs">Orbs</h2>
+        <div class="field">
+          <span class="field-label">Style</span>
+          <div class="seg wide" data-set="orbStyle" role="group" aria-label="Orb style">
+            <button type="button" data-v="glossy">Glossy</button>
+            <button type="button" data-v="flat">Flat</button>
+            <button type="button" data-v="glow">Glow</button>
+            <button type="button" data-v="outline">Ring</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="orbSize">Size <output data-out="orbSize"></output></label>
+          <input type="range" id="orbSize" data-set="orbSize" min="70" max="130" step="5">
+        </div>
+        <label class="opt" for="numbers"><span>Show orb counts<small>Prints the number of orbs in each cell</small></span><input type="checkbox" id="numbers" data-set="numbers"></label>
+        <p class="hint">Player colours are set on the setup screen. Tap a player's dot there.</p>
+      </section>
+
+      <section class="group" aria-labelledby="gMotion">
+        <h2 id="gMotion">Motion</h2>
+        <div class="field">
+          <span class="field-label">Explosion speed</span>
+          <div class="seg wide" data-set="speed" role="group" aria-label="Explosion speed">
+            <button type="button" data-v="slow">Slow</button>
+            <button type="button" data-v="normal">Normal</button>
+            <button type="button" data-v="fast">Fast</button>
+            <button type="button" data-v="instant">Instant</button>
+          </div>
+        </div>
+        <label class="opt" for="spin"><span>Spinning orbs</span><input type="checkbox" id="spin" data-set="spin"></label>
+        <label class="opt" for="shake"><span>Shake cells about to burst</span><input type="checkbox" id="shake" data-set="shake"></label>
+        <label class="opt" for="lastMove"><span>Highlight the last move</span><input type="checkbox" id="lastMove" data-set="lastMove"></label>
+      </section>
+
+      <section class="group" aria-labelledby="gFeel">
+        <h2 id="gFeel">Sound and touch</h2>
+        <label class="opt" for="sound"><span>Sound effects</span><input type="checkbox" id="sound" data-set="sound"></label>
+        <label class="opt" for="vibrate"><span>Vibration<small>Only on phones that support it</small></span><input type="checkbox" id="vibrate" data-set="vibrate"></label>
+      </section>
+
+      <button type="button" id="resetLook" class="btn ghost">Reset look to defaults</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- constants ---------- */
+const PALETTE = [
+  {name:"Red",hex:"#ff4d5e"},   {name:"Green",hex:"#38d97a"},  {name:"Blue",hex:"#4f8cff"},  {name:"Yellow",hex:"#ffd23f"},
+  {name:"Purple",hex:"#b06bff"},{name:"Cyan",hex:"#2fe0e0"},   {name:"Orange",hex:"#ff8a3d"},{name:"Pink",hex:"#ff5fc4"},
+  {name:"White",hex:"#f4f6fb"}, {name:"Lime",hex:"#a3e635"},   {name:"Teal",hex:"#14b8a6"},  {name:"Brown",hex:"#b07a4a"},
+  {name:"Magenta",hex:"#e040fb"},{name:"Sky",hex:"#7dd3fc"},   {name:"Coral",hex:"#ff8a80"}, {name:"Grey",hex:"#9aa3b5"}
+];
+const DEFAULT_COLORS = PALETTE.slice(0, 8).map(c => c.hex);
+const DEFAULT_NAMES = PALETTE.slice(0, 8).map(c => c.name);
+const SWATCH_LISTS = {
+  grid: [["White","#ffffff"],["Silver","#b8c0d4"],["Slate","#5b6584"],["Cyan","#2fe0e0"],["Gold","#ffd23f"],["Pink","#ff5fc4"],["Lime","#a3e635"],["Red","#ff4d5e"]],
+  bg:   [["Ink","#0a0c13"],["Black","#000000"],["Midnight","#0d1b3d"],["Plum","#24112e"],["Forest","#0c2418"],["Slate","#1f2532"],["Paper","#f1efe8"]]
+};
+const SIZES = [
+  {id:"s",   label:"Classic", rows:9,  cols:6},
+  {id:"m",   label:"Large",   rows:12, cols:8},
+  {id:"l",   label:"HD",      rows:16, cols:10},
+  {id:"xl",  label:"XL",      rows:20, cols:12},
+  {id:"xxl", label:"XXL",     rows:24, cols:14},
+  {id:"max", label:"Max",     rows:28, cols:16}
+];
+const LIMITS = { customCols:[4, 20], customRows:[4, 36] };
+const SPEED = { slow:1.7, normal:1, fast:0.5, instant:0.12 };
+const LINE = { thin:1, normal:1.5, bold:2.5 };
+const LOOK_DEFAULTS = {
+  gridMode:"fixed", gridColor:"#ffffff", gridWidth:"normal", gridOpacity:0.8, gridGlow:false,
+  boardBg:"#0a0c13", orbStyle:"glossy", orbSize:1, numbers:false,
+  speed:"normal", spin:true, shake:true, lastMove:true, sound:true, vibrate:true
+};
+const ENUMS = { gridMode:["fixed","player"], gridWidth:Object.keys(LINE), orbStyle:["glossy","flat","glow","outline"], speed:Object.keys(SPEED) };
+const HEX = /^#[0-9a-f]{6}$/i;
+const reduceMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const nameOf = hex => (PALETTE.find(c => c.hex.toLowerCase() === String(hex).toLowerCase()) || {}).name;
+
+/* ---------- saved choices (per device only) ---------- */
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const SETUP_KEY = "chain-reaction-setup", LOOK_KEY = "chain-reaction-look";
+const setup = {
+  count:4, names:DEFAULT_NAMES.slice(), colors:DEFAULT_COLORS.slice(), cpu:new Array(8).fill(false),
+  cpuLevel:"normal", size:"xxl", customCols:14, customRows:24, v:3
+};
+const look = { ...LOOK_DEFAULTS };
+const saveSetup = () => store.set(SETUP_KEY, setup);
+const saveLook = () => store.set(LOOK_KEY, look);
+
+function loadSetup(saved){
+  if (!saved || typeof saved !== "object") return;
+  if (Number.isInteger(saved.count)) setup.count = Math.min(8, Math.max(2, saved.count));
+  if (Array.isArray(saved.names)) saved.names.slice(0, 8).forEach((n, k) => { if (typeof n === "string") setup.names[k] = n.slice(0, 14); });
+  if (Array.isArray(saved.colors)) saved.colors.slice(0, 8).forEach((c, k) => { if (HEX.test(c)) setup.colors[k] = c; });
+  if (Array.isArray(saved.cpu)) saved.cpu.slice(0, 8).forEach((v, k) => { setup.cpu[k] = !!v; });
+  if (["easy","normal","hard"].includes(saved.cpuLevel)) setup.cpuLevel = saved.cpuLevel;
+  // Sizes saved before v2 belong to an older menu, so the XXL default wins once.
+  if (saved.v >= 2 && (saved.size === "custom" || SIZES.some(s => s.id === saved.size))) setup.size = saved.size;
+  for (const k of ["customCols","customRows"]) {
+    if (Number.isInteger(saved[k])) setup[k] = Math.min(LIMITS[k][1], Math.max(LIMITS[k][0], saved[k]));
+  }
+}
+function loadLook(saved){
+  if (!saved || typeof saved !== "object") return;
+  for (const k of Object.keys(LOOK_DEFAULTS)) {
+    const v = saved[k], d = LOOK_DEFAULTS[k];
+    if (typeof v !== typeof d) continue;
+    if (ENUMS[k] && !ENUMS[k].includes(v)) continue;
+    if ((k === "gridColor" || k === "boardBg") && !HEX.test(v)) continue;
+    look[k] = v;
+  }
+  look.gridOpacity = Math.min(1, Math.max(0.15, look.gridOpacity));
+  look.orbSize = Math.min(1.3, Math.max(0.7, look.orbSize));
+}
+
+/* ---------- rules engine (pure, shared by the board and the CPU) ---------- */
+function makeGeom(rows, cols){
+  const n = rows * cols, crit = new Uint8Array(n), nb = new Array(n);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const i = r * cols + c, a = [];
+    if (r > 0) a.push(i - cols);
+    if (r < rows - 1) a.push(i + cols);
+    if (c > 0) a.push(i - 1);
+    if (c < cols - 1) a.push(i + 1);
+    nb[i] = a; crit[i] = a.length;           // critical mass = number of neighbours (2, 3 or 4)
+  }
+  return { rows, cols, n, crit, nb };
+}
+function unstable(G, S){
+  const u = [];
+  for (let i = 0; i < G.n; i++) if (S.count[i] >= G.crit[i]) u.push(i);
+  return u;
+}
+function applyWave(G, S, u){
+  for (const i of u) {
+    const o = S.owner[i];
+    S.count[i] -= G.crit[i];
+    if (S.count[i] === 0) S.owner[i] = -1;
+    for (const j of G.nb[i]) { S.count[j]++; S.owner[j] = o; }
+  }
+}
+function tally(S, np){
+  const t = new Array(np).fill(0);
+  for (let i = 0; i < S.count.length; i++) { const o = S.owner[i]; if (o >= 0) t[o] += S.count[i]; }
+  return t;
+}
+function soleOwner(S, p){
+  for (let i = 0; i < S.owner.length; i++) { const o = S.owner[i]; if (o !== -1 && o !== p) return false; }
+  return true;
+}
+
+/* ---------- CPU player ---------- */
+function simulate(base, i, p){
+  const T = { count:base.count.slice(), owner:base.owner.slice() };
+  T.count[i]++; T.owner[i] = p;
+  for (let w = 0; w < 400; w++) {
+    const u = unstable(G, T);
+    if (!u.length) break;
+    applyWave(G, T, u);
+    if (soleOwner(T, p)) break;
+  }
+  return T;
+}
+function evaluate(T, p, othersMoved){
+  let mine = 0, theirs = 0, s = 0;
+  for (let i = 0; i < G.n; i++) {
+    const o = T.owner[i];
+    if (o === -1) continue;
+    const n = T.count[i], cr = G.crit[i];
+    if (o !== p) { theirs += n; continue; }
+    mine += n; s += n;
+    let exposed = false;
+    for (const j of G.nb[i]) {
+      const oj = T.owner[j];
+      if (oj !== -1 && oj !== p && T.count[j] >= G.crit[j] - 1) { exposed = true; s -= 5 - cr; }
+    }
+    if (!exposed) {
+      if (cr === 2) s += 3; else if (cr === 3) s += 2;
+      if (n === cr - 1) s += 2;
+    }
+  }
+  if (mine === 0) return -1e6;
+  if (theirs === 0 && othersMoved) return 1e6;
+  return s - theirs;
+}
+function legalMoves(T, p){
+  const m = [];
+  for (let i = 0; i < G.n; i++) { const o = T.owner[i]; if (o === -1 || o === p) m.push(i); }
+  return m;
+}
+function cpuChoose(p){
+  const othersMoved = P.every((q, k) => k === p || q.out || q.moved);
+  const level = setup.cpuLevel;
+  const noise = level === "easy" ? 14 : 0.8;
+  const scored = legalMoves(S, p).map(i => {
+    const T = simulate(S, i, p);
+    return { i, T, s:evaluate(T, p, othersMoved) + Math.random() * noise };
+  });
+  scored.sort((a, b) => b.s - a.s);
+  if (level !== "hard" || scored[0].s >= 1e6) return scored[0].i;
+
+  // Hard: for the best few moves, assume the next opponent answers with their best reply.
+  const t0 = performance.now();
+  let best = scored[0], bestScore = -Infinity;
+  for (const c of scored.slice(0, 6)) {
+    if (performance.now() - t0 > 1200) break;
+    const tl = tally(c.T, P.length);
+    let q = -1;
+    for (let step = 1; step < P.length; step++) {
+      const k = (p + step) % P.length;
+      if (!P[k].out && (tl[k] > 0 || !P[k].moved)) { q = k; break; }
+    }
+    let worst = c.s;
+    if (q >= 0) {
+      for (const j of legalMoves(c.T, q)) {
+        const v = evaluate(simulate(c.T, j, q), p, true);
+        if (v < worst) worst = v;
+      }
+    }
+    const score = worst + c.s * 0.01;
+    if (score > bestScore) { bestScore = score; best = c; }
+  }
+  return best.i;
+}
+
+/* ---------- game state ---------- */
+let G = null, S = null, P = [], cur = 0, moveNo = 0, lastMove = -1;
+let busy = false, over = false, history = [], gameId = 0, cpuTimer = 0, chainLen = 0;
+let anim = null, flash = null, screen = "setup", openPal = -1;
+
+/* ---------- sound and touch ---------- */
+let actx = null;
+function ensureAudio(){
+  if (!look.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+  } catch (e) { actx = null; }
+}
+function blip(freq, dur, type, vol, delay){
+  if (!look.sound || !actx) return;
+  try {
+    const t = actx.currentTime + (delay || 0);
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "sine";
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(freq * 0.55, t + dur);
+    g.gain.setValueAtTime(vol || 0.1, t);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    o.connect(g).connect(actx.destination);
+    o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+function buzz(ms){ if (!look.vibrate) return; try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+
+let toastTimer = 0;
+function toast(msg){
+  const el = $("#toast");
+  el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 1700);
+}
+
+/* ---------- setup screen ---------- */
+function boardSize(){
+  if (setup.size === "custom") return { rows:setup.customRows, cols:setup.customCols };
+  return SIZES.find(s => s.id === setup.size) || SIZES[4];
+}
+function renderSetup(){
+  $("#pcount").textContent = setup.count;
+  $("#minus").disabled = setup.count <= 2;
+  $("#plus").disabled = setup.count >= 8;
+  const list = $("#plist");
+  list.innerHTML = "";
+  for (let k = 0; k < setup.count; k++) {
+    const row = document.createElement("div");
+    row.className = "prow";
+    row.style.setProperty("--c", setup.colors[k]);
+    const isCustom = !PALETTE.some(c => c.hex.toLowerCase() === setup.colors[k].toLowerCase());
+    row.innerHTML =
+      `<div class="prow-main">
+         <button type="button" class="swatch" data-pal="${k}" aria-expanded="${openPal === k}" aria-label="Change colour for player ${k + 1}"></button>
+         <label class="sr" for="pname-${k}">Player ${k + 1} name</label>
+         <input id="pname-${k}" class="pname" maxlength="14" autocomplete="off" spellcheck="false" placeholder="Player ${k + 1}">
+         <div class="seg" role="group" aria-label="Who plays seat ${k + 1}">
+           <button type="button" data-k="${k}" data-cpu="0" aria-pressed="${!setup.cpu[k]}">Human</button>
+           <button type="button" data-k="${k}" data-cpu="1" aria-pressed="${setup.cpu[k]}">CPU</button>
+         </div>
+       </div>
+       <div class="palette swatches" ${openPal === k ? "" : "hidden"} role="group" aria-label="Colours for player ${k + 1}">
+         ${PALETTE.map(c => `<button type="button" class="sw" style="--c:${c.hex}" data-k="${k}" data-color="${c.hex}" aria-label="${c.name}" aria-pressed="${c.hex.toLowerCase() === setup.colors[k].toLowerCase()}"></button>`).join("")}
+         <label class="sw sw-custom${isCustom ? " is-on" : ""}"><span class="sr">Any colour for player ${k + 1}</span><input type="color" id="pcolor-${k}" data-k="${k}" value="${setup.colors[k]}"></label>
+       </div>`;
+    const input = row.querySelector(".pname");
+    input.value = setup.names[k];
+    input.addEventListener("input", () => { setup.names[k] = input.value; saveSetup(); });
+    const picker = row.querySelector('input[type="color"]');
+    picker.addEventListener("input", () => { row.style.setProperty("--c", picker.value); setPlayerColor(k, picker.value, false); });
+    picker.addEventListener("change", () => { openPal = -1; renderSetup(); });
+    list.appendChild(row);
+  }
+  $$("#cpuLevel button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === setup.cpuLevel)));
+  $("#sizes").innerHTML =
+    SIZES.map(s => `<button type="button" class="size" data-size="${s.id}" aria-pressed="${s.id === setup.size}"><b>${s.cols}&times;${s.rows}</b><span>${s.label}</span></button>`).join("") +
+    `<button type="button" class="size custom" data-size="custom" aria-pressed="${setup.size === "custom"}"><span>Custom size</span><b>${setup.customCols}&times;${setup.customRows}</b></button>`;
+  $("#customSize").hidden = setup.size !== "custom";
+  $("#colsOut").textContent = setup.customCols;
+  $("#rowsOut").textContent = setup.customRows;
+  $$("#customSize button[data-dim]").forEach(b => {
+    const v = setup[b.dataset.dim], [lo, hi] = LIMITS[b.dataset.dim];
+    b.disabled = +b.dataset.d < 0 ? v <= lo : v >= hi;
+  });
+}
+function setPlayerColor(k, hex, swap){
+  const old = setup.colors[k];
+  const other = setup.colors.findIndex((c, j) => j !== k && c.toLowerCase() === hex.toLowerCase());
+  if (swap && other >= 0) {
+    setup.colors[other] = old;
+    if (setup.names[other] === nameOf(hex)) setup.names[other] = nameOf(old) || setup.names[other];
+  }
+  // A seat still using its default colour name follows its new colour.
+  if (setup.names[k] === nameOf(old) && nameOf(hex)) setup.names[k] = nameOf(hex);
+  setup.colors[k] = hex;
+  saveSetup();
+}
+$("#minus").addEventListener("click", () => { setup.count = Math.max(2, setup.count - 1); openPal = -1; saveSetup(); renderSetup(); });
+$("#plus").addEventListener("click", () => { setup.count = Math.min(8, setup.count + 1); openPal = -1; saveSetup(); renderSetup(); });
+$("#plist").addEventListener("click", e => {
+  const pal = e.target.closest("button[data-pal]");
+  if (pal) { const k = +pal.dataset.pal; openPal = openPal === k ? -1 : k; renderSetup(); return; }
+  const sw = e.target.closest("button[data-color]");
+  if (sw) { setPlayerColor(+sw.dataset.k, sw.dataset.color, true); openPal = -1; renderSetup(); return; }
+  const b = e.target.closest("button[data-cpu]");
+  if (b) { setup.cpu[+b.dataset.k] = b.dataset.cpu === "1"; saveSetup(); renderSetup(); }
+});
+$("#cpuLevel").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]");
+  if (!b) return;
+  setup.cpuLevel = b.dataset.v; saveSetup(); renderSetup();
+});
+$("#sizes").addEventListener("click", e => {
+  const b = e.target.closest("button[data-size]");
+  if (!b) return;
+  setup.size = b.dataset.size; saveSetup(); renderSetup();
+});
+$("#customSize").addEventListener("click", e => {
+  const b = e.target.closest("button[data-dim]");
+  if (!b) return;
+  const k = b.dataset.dim, [lo, hi] = LIMITS[k];
+  setup[k] = Math.min(hi, Math.max(lo, setup[k] + +b.dataset.d));
+  saveSetup(); renderSetup();
+});
+$("#startBtn").addEventListener("click", () => { ensureAudio(); newGame(); });
+
+function showScreen(name){
+  screen = name;
+  $("#setup").hidden = name !== "setup";
+  $("#game").hidden = name !== "game";
+  applyPageBg();
+  if (name === "game") layout();
+}
+function applyPageBg(){
+  const bg = screen === "game" ? look.boardBg : "";
+  document.body.style.background = bg;
+  document.documentElement.style.background = bg;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", bg || "#0a0c13");
+}
+
+/* ---------- customize panel ---------- */
+let returnToGame = false;
+function openCustomize(fromGame){
+  returnToGame = fromGame;
+  clearTimeout(cpuTimer);
+  $("#menuOv").hidden = true;
+  $("#customOv").hidden = false;
+  syncCustomize();
+  layoutPreview();
+  $("#customDone").focus();
+}
+function closeCustomize(){
+  $("#customOv").hidden = true;
+  if (returnToGame) maybeCpu();
+}
+function renderSwatches(){
+  $$("#customOv .swatches[data-list]").forEach(box => {
+    const key = box.dataset.set;
+    box.innerHTML =
+      SWATCH_LISTS[box.dataset.list].map(([name, hex]) =>
+        `<button type="button" class="sw" style="--c:${hex}" data-hex="${hex}" aria-label="${name}"></button>`).join("") +
+      `<label class="sw sw-custom"><span class="sr">Any colour</span><input type="color" id="pick-${key}"></label>`;
+    box.addEventListener("click", e => {
+      const b = e.target.closest("button[data-hex]");
+      if (b) { look[key] = b.dataset.hex; applyLook(); }
+    });
+    box.querySelector('input[type="color"]').addEventListener("input", e => { look[key] = e.target.value; applyLook(); });
+  });
+}
+function syncCustomize(){
+  $$("#customOv [data-set]").forEach(el => {
+    const key = el.dataset.set, v = look[key];
+    if (el.classList.contains("seg")) {
+      el.querySelectorAll("button[data-v]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+    } else if (el.classList.contains("swatches")) {
+      let matched = false;
+      el.querySelectorAll("button[data-hex]").forEach(b => {
+        const on = b.dataset.hex.toLowerCase() === v.toLowerCase();
+        matched = matched || on;
+        b.setAttribute("aria-pressed", String(on));
+      });
+      const custom = el.querySelector(".sw-custom");
+      custom.classList.toggle("is-on", !matched);
+      custom.querySelector("input").value = v;
+    } else if (el.type === "range") {
+      el.value = Math.round(v * 100);
+    } else if (el.type === "checkbox") {
+      el.checked = !!v;
+    }
+  });
+  $$("#customOv output[data-out]").forEach(o => { o.textContent = Math.round(look[o.dataset.out] * 100) + "%"; });
+  $("#gridColorField").classList.toggle("is-off", look.gridMode === "player");
+  $("#previewWrap").style.setProperty("--pbg", look.boardBg);
+}
+$("#customOv").addEventListener("click", e => {
+  const b = e.target.closest(".seg[data-set] button[data-v]");
+  if (!b) return;
+  look[b.closest(".seg").dataset.set] = b.dataset.v;
+  applyLook();
+});
+$$('#customOv input[type="range"][data-set]').forEach(el => el.addEventListener("input", () => { look[el.dataset.set] = +el.value / 100; applyLook(); }));
+$$('#customOv input[type="checkbox"][data-set]').forEach(el => el.addEventListener("change", () => {
+  look[el.dataset.set] = el.checked;
+  if (el.dataset.set === "sound" && el.checked) ensureAudio();
+  if (el.dataset.set === "vibrate" && el.checked) buzz(20);
+  applyLook();
+}));
+$("#resetLook").addEventListener("click", () => { Object.assign(look, LOOK_DEFAULTS); applyLook(); toast("Look reset to defaults"); });
+$("#customDone").addEventListener("click", closeCustomize);
+$("#customizeBtn").addEventListener("click", () => openCustomize(false));
+$("#menuCustomBtn").addEventListener("click", () => openCustomize(true));
+
+function applyLook(){
+  saveLook();
+  syncCustomize();
+  syncSound();
+  applyPageBg();
+  layout();
+  layoutPreview();
+}
+function syncSound(){
+  const b = $("#soundBtn");
+  b.setAttribute("aria-pressed", String(look.sound));
+  b.setAttribute("aria-label", look.sound ? "Sound on" : "Sound off");
+  b.querySelector("#waves").toggleAttribute("hidden", !look.sound);
+  b.querySelector("#mute").toggleAttribute("hidden", look.sound);
+}
+
+/* ---------- game flow ---------- */
+function newGame(){
+  const sz = boardSize();
+  G = makeGeom(sz.rows, sz.cols);
+  S = { count:new Uint8Array(G.n), owner:new Int8Array(G.n).fill(-1) };
+  P = [];
+  for (let k = 0; k < setup.count; k++) {
+    P.push({ name:(setup.names[k] || "").trim() || `Player ${k + 1}`, color:setup.colors[k], cpu:setup.cpu[k], moved:false, out:false });
+  }
+  cur = 0; moveNo = 0; lastMove = -1; busy = false; over = false; history = []; anim = null; flash = null; chainLen = 0;
+  gameId++; clearTimeout(cpuTimer);
+  $("#winOv").hidden = true; $("#menuOv").hidden = true;
+  showScreen("game");
+  updateUI();
+  maybeCpu();
+}
+
+function pushHistory(){
+  history.push({ count:S.count.slice(), owner:S.owner.slice(), P:P.map(q => ({ moved:q.moved, out:q.out })), cur, moveNo, lastMove });
+  if (history.length > 400) history.shift();
+}
+
+async function place(i){
+  if (busy || over || i < 0) return;
+  const o = S.owner[i];
+  if (o !== -1 && o !== cur) {
+    flash = { i, t:performance.now() };
+    toast(`That cell belongs to ${P[o].name}`);
+    buzz(30);
+    return;
+  }
+  pushHistory();
+  const p = cur;
+  S.count[i]++; S.owner[i] = p; P[p].moved = true; lastMove = i; moveNo++;
+  blip(560, 0.07, "sine", 0.09);
+  await resolve(p, gameId);
+}
+
+/* Runs explosion waves until the board is calm or someone has won, then passes the turn. */
+async function resolve(p, id){
+  busy = true; chainLen = 0;
+  updateUI();
+  let w = 0;
+  while (true) {
+    const u = unstable(G, S);
+    if (!u.length) break;
+    await animateWave(u, p, w);
+    if (id !== gameId) return;               // game was restarted or left mid-chain
+    applyWave(G, S, u);
+    w++; chainLen = w;
+    markOuts();
+    updateUI();
+    if (checkWin()) { busy = false; return; }
+    if (w > 5000) break;
+  }
+  markOuts();
+  busy = false; chainLen = 0;
+  if (checkWin()) return;
+  advance();
+}
+
+function animateWave(u, p, w){
+  const base = Math.max(70, 210 - w * 14) * (SPEED[look.speed] || 1);
+  const dur = reduceMotion ? 60 : Math.max(16, base);
+  const mask = new Uint8Array(G.n);
+  for (const i of u) mask[i] = 1;
+  anim = { list:u, mask, p, start:performance.now(), dur };
+  blip(Math.min(150 + w * 24, 760), 0.12, "triangle", 0.08);
+  if (w === 0) buzz(12);
+  return new Promise(res => setTimeout(() => { anim = null; res(); }, dur));
+}
+
+function markOuts(){
+  const t = tally(S, P.length);
+  P.forEach((q, k) => {
+    if (!q.out && q.moved && t[k] === 0) { q.out = true; toast(`${q.name} is out`); }
+  });
+}
+
+function checkWin(){
+  const alive = P.filter(q => !q.out);
+  if (P.length > 1 && alive.length === 1) {
+    over = true;
+    clearTimeout(cpuTimer);
+    showWinner(P.indexOf(alive[0]));
+    return true;
+  }
+  return false;
+}
+
+function advance(){
+  let k = cur;
+  do { k = (k + 1) % P.length; } while (P[k].out);
+  cur = k;
+  updateUI();
+  maybeCpu();
+}
+
+function maybeCpu(){
+  clearTimeout(cpuTimer);
+  if (over || busy || !P[cur] || !P[cur].cpu || screen !== "game") return;
+  const id = gameId;
+  const delay = reduceMotion ? 250 : Math.max(120, 550 * (SPEED[look.speed] || 1));
+  cpuTimer = setTimeout(() => {
+    if (id !== gameId || over || busy || !P[cur].cpu || !$("#menuOv").hidden || !$("#customOv").hidden) return;
+    place(cpuChoose(cur));
+  }, delay);
+}
+
+function undo(){
+  if (busy || !history.length) return;
+  const anyHuman = P.some(q => !q.cpu);
+  let h = history.pop();
+  // Step back past CPU moves so the undo lands on a human's turn.
+  while (anyHuman && P[h.cur].cpu && history.length) h = history.pop();
+  S.count = h.count; S.owner = h.owner;
+  P.forEach((q, k) => { q.moved = h.P[k].moved; q.out = h.P[k].out; });
+  cur = h.cur; moveNo = h.moveNo; lastMove = h.lastMove;
+  over = false; anim = null; flash = null;
+  clearTimeout(cpuTimer);
+  $("#winOv").hidden = true;
+  updateUI();
+  toast("Move undone");
+  maybeCpu();
+}
+
+function showWinner(k){
+  const q = P[k];
+  $("#winOv").style.setProperty("--wc", q.color);
+  $("#winTitle").textContent = `${q.name} wins`;
+  const orbs = tally(S, P.length)[k];
+  $("#winStats").textContent = `${moveNo} moves played. ${q.name} holds all ${orbs} orbs on the board.`;
+  $("#winOv").hidden = false;
+  [523, 659, 784, 1046].forEach((f, n) => blip(f, 0.22, "sine", 0.09, n * 0.11));
+  buzz(60);
+  updateUI();
+  setTimeout(() => $("#againBtn").focus(), 50);
+}
+
+/* ---------- HUD ---------- */
+function updateUI(){
+  if (!G) return;
+  const q = P[cur];
+  $("#game").style.setProperty("--pc", q.color);
+  $("#turnName").textContent = q.name;
+  $("#turnNote").textContent =
+    over ? "winner" :
+    busy ? (chainLen > 1 ? `chain ×${chainLen}` : "reacting") :
+    q.cpu ? "thinking" : "your move";
+  $("#moveNo").textContent = `Move ${moveNo}`;
+  $("#undoBtn").disabled = busy || !history.length;
+  $("#winUndoBtn").disabled = !history.length;
+  const t = tally(S, P.length);
+  $("#rail").innerHTML = P.map((p, k) =>
+    `<div class="chip${k === cur && !over ? " is-turn" : ""}${p.out ? " is-out" : ""}" style="--c:${p.color}">` +
+    `<span class="dot" aria-hidden="true"></span><span class="nm">${esc(p.name)}${p.cpu ? " (CPU)" : ""}</span>` +
+    `<span class="ct">${p.out ? "out" : t[k]}</span></div>`
+  ).join("");
+}
+
+/* ---------- board rendering (shared by the game board and the preview) ---------- */
+function hexToRgb(h){ const v = parseInt(h.slice(1), 16); return [v >> 16 & 255, v >> 8 & 255, v & 255]; }
+function hexA(h, a){ const [r, g, b] = hexToRgb(h); return `rgba(${r},${g},${b},${a})`; }
+function mix(h, to, amt){
+  const a = hexToRgb(h), b = hexToRgb(to);
+  return "#" + a.map((x, i) => Math.round(x + (b[i] - x) * amt).toString(16).padStart(2, "0")).join("");
+}
+function isLight(h){ const [r, g, b] = hexToRgb(h); return (r * 299 + g * 587 + b * 114) / 1000 > 150; }
+function makeSprite(hex, R, dpr, style){
+  const s = Math.max(4, Math.ceil(R * 2 * dpr));
+  const c = document.createElement("canvas");
+  c.width = c.height = s;
+  const g = c.getContext("2d"), r = s / 2;
+  g.beginPath();
+  if (style === "flat") {
+    g.arc(r, r, r * 0.9, 0, Math.PI * 2);
+    g.fillStyle = hex; g.fill();
+    g.lineWidth = r * 0.12; g.strokeStyle = mix(hex, "#000000", 0.35); g.stroke();
+  } else if (style === "glow") {
+    const grd = g.createRadialGradient(r, r, 0, r, r, r);
+    grd.addColorStop(0, mix(hex, "#ffffff", 0.7));
+    grd.addColorStop(0.42, hex);
+    grd.addColorStop(0.7, hexA(hex, 0.45));
+    grd.addColorStop(1, hexA(hex, 0));
+    g.arc(r, r, r, 0, Math.PI * 2);
+    g.fillStyle = grd; g.fill();
+  } else if (style === "outline") {
+    g.arc(r, r, r * 0.7, 0, Math.PI * 2);
+    g.fillStyle = hexA(hex, 0.18); g.fill();
+    g.lineWidth = r * 0.28; g.strokeStyle = hex; g.stroke();
+  } else {
+    const grd = g.createRadialGradient(r * 0.68, r * 0.6, r * 0.06, r, r, r);
+    grd.addColorStop(0, "#ffffff");
+    grd.addColorStop(0.2, mix(hex, "#ffffff", 0.35));
+    grd.addColorStop(0.62, hex);
+    grd.addColorStop(1, mix(hex, "#000000", 0.5));
+    g.arc(r, r, r * 0.95, 0, Math.PI * 2);
+    g.fillStyle = grd; g.fill();
+  }
+  return c;
+}
+
+function makeView(canvas){ return { canvas, ctx:canvas.getContext("2d"), cell:0, w:0, h:0, orbR:0, dpr:1, sprites:[] }; }
+function sizeView(V, rows, cols, availW, availH, colors){
+  if (availW < 10 || availH < 10) return false;
+  const cell = Math.max(8, Math.floor(Math.min((availW - 2) / cols, (availH - 2) / rows)));
+  V.cell = cell; V.w = cell * cols; V.h = cell * rows;
+  V.orbR = cell * 0.21 * look.orbSize;
+  V.dpr = Math.min(3, window.devicePixelRatio || 1);
+  V.canvas.style.width = (V.w + 1) + "px";
+  V.canvas.style.height = (V.h + 1) + "px";
+  V.canvas.width = Math.round((V.w + 1) * V.dpr);
+  V.canvas.height = Math.round((V.h + 1) * V.dpr);
+  V.sprites = colors.map(h => makeSprite(h, V.orbR, V.dpr, look.orbStyle));
+  return true;
+}
+
+const mainView = makeView($("#board")), prevView = makeView($("#preview"));
+const stage = $("#stage");
+function layout(){
+  if (!G || screen !== "game") return;
+  const r = stage.getBoundingClientRect();
+  sizeView(mainView, G.rows, G.cols, r.width, r.height, P.map(q => q.color));
+}
+new ResizeObserver(layout).observe(stage);
+
+// A small fixed position for the preview, with cells at every stage from calm to about to burst.
+const PG = makeGeom(3, 6);
+const PS = (() => {
+  const count = new Uint8Array(18), owner = new Int8Array(18).fill(-1);
+  const put = (r, c, n, o) => { count[r * 6 + c] = n; owner[r * 6 + c] = o; };
+  put(0, 0, 1, 0); put(0, 2, 2, 1); put(1, 1, 3, 2); put(1, 4, 1, 3);
+  put(2, 5, 1, 0); put(2, 3, 2, 0); put(0, 5, 1, 2); put(2, 0, 1, 3); put(1, 3, 2, 1);
+  return { count, owner };
+})();
+function previewColors(){ return (screen === "game" && P.length ? P.map(q => q.color) : setup.colors).slice(0, 4); }
+function layoutPreview(){
+  if ($("#customOv").hidden) return;
+  const wrap = $("#previewWrap"), r = wrap.getBoundingClientRect();
+  sizeView(prevView, 3, 6, r.width - 24, r.height - 24, previewColors());
+}
+new ResizeObserver(layoutPreview).observe($("#previewWrap"));
+
+const OFFS = { 1:[[0,0]], 2:[[-0.62,0],[0.62,0]], 3:[[0,-0.72],[0.63,0.37],[-0.63,0.37]] };
+function clusterOffsets(n){
+  if (OFFS[n]) return OFFS[n];
+  const a = [];
+  for (let k = 0; k < n; k++) a.push([Math.cos(k * 2 * Math.PI / n) * 0.9, Math.sin(k * 2 * Math.PI / n) * 0.9]);
+  return OFFS[n] = a;
+}
+function center(V, Gx, i){ const c = V.cell; return [(i % Gx.cols) * c + c / 2 + 0.5, ((i / Gx.cols) | 0) * c + c / 2 + 0.5]; }
+
+function drawCluster(V, Gx, i, n, o, now){
+  const R = V.orbR, spr = V.sprites[o];
+  if (!spr) return;
+  const [cx, cy] = center(V, Gx, i);
+  const hot = n >= Gx.crit[i] - 1;            // one more orb and this cell bursts
+  const spin = reduceMotion || !look.spin || n === 1 ? 0 : (hot ? 0.0055 : 0.0016);
+  const a = now * spin + i * 1.3;
+  let jx = 0, jy = 0;
+  if (hot && look.shake && !reduceMotion) { jx = Math.sin(now * 0.07 + i) * V.cell * 0.02; jy = Math.cos(now * 0.083 + i * 2) * V.cell * 0.02; }
+  const ca = Math.cos(a), sa = Math.sin(a);
+  for (const [dx, dy] of clusterOffsets(n)) {
+    const x = cx + jx + (dx * ca - dy * sa) * R, y = cy + jy + (dx * sa + dy * ca) * R;
+    V.ctx.drawImage(spr, x - R, y - R, R * 2, R * 2);
+  }
+}
+
+function drawBoard(V, B, now){
+  const ctx = V.ctx, c = V.cell, Gx = B.G;
+  ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
+  ctx.fillStyle = look.boardBg;
+  ctx.fillRect(0, 0, V.w + 1, V.h + 1);
+
+  if (look.lastMove && B.lastMove >= 0 && B.owner[B.lastMove] >= 0) {
+    ctx.fillStyle = hexA(B.colors[B.owner[B.lastMove]], 0.16);
+    ctx.fillRect((B.lastMove % Gx.cols) * c + 1, ((B.lastMove / Gx.cols) | 0) * c + 1, c - 1, c - 1);
+  }
+
+  const gcol = look.gridMode === "player" ? B.mover : look.gridColor;
+  ctx.save();
+  ctx.strokeStyle = hexA(gcol, look.gridOpacity);
+  ctx.lineWidth = LINE[look.gridWidth] || 1.5;
+  if (look.gridGlow) { ctx.shadowColor = hexA(gcol, 0.75); ctx.shadowBlur = 6; }
+  ctx.beginPath();
+  for (let x = 0; x <= Gx.cols; x++) { ctx.moveTo(x * c + 0.5, 0); ctx.lineTo(x * c + 0.5, V.h + 1); }
+  for (let y = 0; y <= Gx.rows; y++) { ctx.moveTo(0, y * c + 0.5); ctx.lineTo(V.w + 1, y * c + 0.5); }
+  ctx.stroke();
+  ctx.restore();
+
+  if (B.flash) {
+    const k = Math.max(0, (now - B.flash.t) / 450);
+    if (k >= 1) flash = null;
+    else {
+      ctx.strokeStyle = `rgba(255,107,107,${1 - k})`;
+      ctx.lineWidth = 3;
+      ctx.strokeRect((B.flash.i % Gx.cols) * c + 2, ((B.flash.i / Gx.cols) | 0) * c + 2, c - 3, c - 3);
+    }
+  }
+
+  const A = B.anim;
+  for (let i = 0; i < Gx.n; i++) {
+    let n = B.count[i];
+    if (A && A.mask[i]) n -= Gx.crit[i];
+    const o = B.owner[i];
+    if (n > 0 && o >= 0) drawCluster(V, Gx, i, n, o, now);
+  }
+
+  if (look.numbers) {
+    ctx.font = `700 ${Math.max(8, Math.round(c * 0.26))}px "JetBrains Mono", ui-monospace, monospace`;
+    ctx.textAlign = "right"; ctx.textBaseline = "top";
+    ctx.fillStyle = isLight(look.boardBg) ? "rgba(10,12,19,.75)" : "rgba(255,255,255,.8)";
+    for (let i = 0; i < Gx.n; i++) {
+      let n = B.count[i];
+      if (A && A.mask[i]) n -= Gx.crit[i];
+      if (n > 0) ctx.fillText(String(n), (i % Gx.cols) * c + c - 3, ((i / Gx.cols) | 0) * c + 3);
+    }
+  }
+
+  if (A) {
+    // rAF timestamps can trail performance.now(), so clamp the start of a wave
+    const k = Math.min(1, Math.max(0, (now - A.start) / A.dur)), e = 1 - Math.pow(1 - k, 3);
+    const R = V.orbR, spr = V.sprites[A.p];
+    ctx.strokeStyle = B.colors[A.p];
+    ctx.lineWidth = 2;
+    for (const i of A.list) {
+      const [x0, y0] = center(V, Gx, i);
+      ctx.globalAlpha = (1 - k) * 0.7;
+      ctx.beginPath(); ctx.arc(x0, y0, c * (0.15 + 0.45 * e), 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+      for (const j of Gx.nb[i]) {
+        const [x1, y1] = center(V, Gx, j);
+        ctx.drawImage(spr, x0 + (x1 - x0) * e - R, y0 + (y1 - y0) * e - R, R * 2, R * 2);
+      }
+    }
+  }
+}
+
+function frame(now){
+  if (G && screen === "game" && mainView.cell) {
+    const colors = P.map(q => q.color);
+    drawBoard(mainView, { G, count:S.count, owner:S.owner, colors, mover:colors[anim ? anim.p : cur], anim, flash, lastMove:over ? -1 : lastMove }, now);
+  }
+  if (!$("#customOv").hidden && prevView.cell) {
+    const colors = previewColors();
+    drawBoard(prevView, { G:PG, count:PS.count, owner:PS.owner, colors, mover:colors[0], anim:null, flash:null, lastMove:7 }, now);
+  }
+  requestAnimationFrame(frame);
+}
+
+$("#board").addEventListener("click", e => {
+  if (!G || busy || over || P[cur].cpu) return;
+  ensureAudio();
+  const r = $("#board").getBoundingClientRect();
+  const col = Math.floor((e.clientX - r.left) / mainView.cell), row = Math.floor((e.clientY - r.top) / mainView.cell);
+  if (col < 0 || row < 0 || col >= G.cols || row >= G.rows) return;
+  place(row * G.cols + col);
+});
+
+/* ---------- buttons ---------- */
+$("#undoBtn").addEventListener("click", undo);
+$("#winUndoBtn").addEventListener("click", undo);
+$("#soundBtn").addEventListener("click", () => { look.sound = !look.sound; if (look.sound) ensureAudio(); applyLook(); });
+$("#menuBtn").addEventListener("click", () => { clearTimeout(cpuTimer); $("#menuOv").hidden = false; $("#resumeBtn").focus(); });
+$("#resumeBtn").addEventListener("click", () => { $("#menuOv").hidden = true; maybeCpu(); });
+$("#restartBtn").addEventListener("click", () => { $("#menuOv").hidden = true; newGame(); });
+$("#againBtn").addEventListener("click", newGame);
+function toSetup(){
+  gameId++; clearTimeout(cpuTimer); busy = false; anim = null;
+  $("#menuOv").hidden = true; $("#winOv").hidden = true;
+  renderSetup(); showScreen("setup");
+}
+$("#leaveBtn").addEventListener("click", toSetup);
+$("#winSetupBtn").addEventListener("click", toSetup);
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (!$("#customOv").hidden) closeCustomize();
+  else if (!$("#menuOv").hidden) $("#resumeBtn").click();
+});
+
+/* ---------- install as an app (only on the hosted site) ---------- */
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; $("#installBtn").hidden = false; });
+window.addEventListener("appinstalled", () => { installPrompt = null; $("#installBtn").hidden = true; toast("Installed. Open it from your home screen."); });
+$("#installBtn").addEventListener("click", async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  try { await installPrompt.userChoice; } catch (e) {}
+  installPrompt = null; $("#installBtn").hidden = true;
+});
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && document.querySelector('link[rel="manifest"]')) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+/* ---------- keep an in-progress game when the page is updated live ---------- */
+function snapshot(){
+  return {
+    setup, look, screen,
+    game: G ? { rows:G.rows, cols:G.cols, count:Array.from(S.count), owner:Array.from(S.owner), P, cur, moveNo, lastMove, over } : null
+  };
+}
+try { window.claude?.hot?.snapshot?.(snapshot); } catch (e) {}
+
+function restoreGame(g){
+  try {
+    G = makeGeom(g.rows, g.cols);
+    S = { count:Uint8Array.from(g.count), owner:Int8Array.from(g.owner) };
+    P = g.P.map(q => ({ ...q }));
+    cur = g.cur; moveNo = g.moveNo; lastMove = g.lastMove; over = !!g.over;
+    history = []; busy = false; anim = null; gameId++;
+    showScreen("game");
+    updateUI();
+    if (over) checkWin();
+    else if (unstable(G, S).length) resolve(cur, gameId);
+    else maybeCpu();
+  } catch (e) { G = null; showScreen("setup"); }
+}
+
+function boot(data){
+  const savedSetup = store.get(SETUP_KEY), savedLook = store.get(LOOK_KEY);
+  loadSetup(savedSetup);
+  loadLook(savedLook);
+  // Older versions kept the sound switch with the players.
+  if (!savedLook && savedSetup && typeof savedSetup.sound === "boolean") look.sound = savedSetup.sound;
+  if (data && data.setup) loadSetup(data.setup);
+  if (data && data.look) loadLook(data.look);
+  renderSetup();
+  renderSwatches();
+  syncCustomize();
+  syncSound();
+  if (data && data.game && data.screen === "game") restoreGame(data.game);
+  requestAnimationFrame(frame);
+}
+const hot = window.claude?.hot;
+if (hot?.ready) hot.ready(boot); else boot(hot?.data ?? {});
+})();
+</script>
+<!-- APP:END -->
+</body>
+</html>
