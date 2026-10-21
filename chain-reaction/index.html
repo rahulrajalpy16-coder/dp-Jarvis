@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: one-screen app. A setup sheet, then a board that fills the screen between a turn bar and a player rail.
+/* Layout: one-screen app. A home sheet, then a board that fills the screen between a turn bar and a player rail.
    The app chrome is a single dark look by choice; the board itself takes whatever colours the players pick. */
 :root{
   --ink:#0a0c13;
@@ -25,6 +25,8 @@
   --line:#272e45;
   --text:#eceff7;
   --muted:#8e96b0;
+  --gold:#ffd23f;
+  --danger:#ff8a8a;
   --pc:#ff4d5e;
   --font-display:"Bricolage Grotesque","Segoe UI",Roboto,system-ui,sans-serif;
   --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -46,14 +48,19 @@ button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--text);outline-offset:2px}
 .screen{height:100%;display:flex;flex-direction:column}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.muted{color:var(--muted)}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
 
 /* ---------- shared controls ---------- */
 h2{margin:0;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:14px;border:1px solid var(--line);background:var(--raise);color:var(--text);font-size:16px;font-weight:700;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:14px;border:1px solid var(--line);background:var(--raise);color:var(--text);font-size:16px;font-weight:700;cursor:pointer;text-align:center}
+.btn:disabled{opacity:.4;cursor:default}
 .btn.primary{border-color:transparent;background:var(--text);color:var(--ink)}
 .btn.ghost{background:transparent}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,var(--line))}
 .btn.big{min-height:56px;font-size:18px}
 .btn.small{min-height:38px;padding:0 16px;font-size:15px;border-radius:12px}
+.btn.mini{min-height:34px;padding:0 12px;font-size:13px;border-radius:10px}
 .seg{display:flex;flex:none;padding:3px;border-radius:999px;background:var(--ink)}
 .seg button{padding:7px 11px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .seg button[aria-pressed="true"]{background:var(--raise);color:var(--text)}
@@ -72,8 +79,13 @@ h2{margin:0;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:u
 .sw-custom{display:inline-block;overflow:hidden;background:conic-gradient(#ff4d5e,#ffd23f,#38d97a,#2fe0e0,#4f8cff,#b06bff,#ff4d5e)}
 .sw-custom input{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);opacity:0;border:0;padding:0;cursor:pointer}
 .sw-custom.is-on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--text)}
+.text-input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--ink);color:var(--text);font:inherit;font-size:16px}
+textarea.text-input{min-height:96px;resize:vertical;font-family:var(--font-mono);font-size:12px;line-height:1.4}
+.pdots{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pdot{width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:0 0 8px color-mix(in srgb,var(--c) 50%,transparent)}
+.pdot.out{opacity:.25;box-shadow:none}
 
-/* ---------- setup ---------- */
+/* ---------- home ---------- */
 #setup{overflow-y:auto;overscroll-behavior:contain;padding-block:24px 32px}
 .sheet{width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
 .brand{display:grid;gap:12px}
@@ -88,6 +100,17 @@ h2{margin:0;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:u
 h1{margin:0;font-size:clamp(46px,14vw,76px);line-height:.88;font-weight:800;letter-spacing:-.035em;text-wrap:balance}
 h1 .hot{background:linear-gradient(90deg,#ff4d5e,#ffd23f 35%,#38d97a 65%,#4f8cff);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lede{margin:0;color:var(--muted);line-height:1.5;max-width:42ch}
+.continue{display:grid;gap:10px;padding:16px;border-radius:16px;background:var(--panel);border:1px solid color-mix(in srgb,var(--c,#eceff7) 45%,var(--line))}
+.continue-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.continue-top b{font-size:18px}
+.continue p{margin:0;color:var(--muted);font-size:14px}
+.continue-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tile{display:grid;gap:3px;align-content:start;text-align:left;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);cursor:pointer;min-width:0}
+.tile b{font-size:16px}
+.tile span{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile.wide{grid-column:1/-1}
+.tile.warn span{color:var(--gold)}
 .block{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .block-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .plist{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
@@ -101,7 +124,7 @@ h1 .hot{background:linear-gradient(90deg,#ff4d5e,#ffd23f 35%,#38d97a 65%,#4f8cff
 .pname:focus{outline:none;border-bottom-color:var(--c)}
 .palette{padding:2px 4px 6px}
 .hint{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
-.sub-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sub-row{display:flex;align-items:center;justify-content:space-between;gap:10px 12px;flex-wrap:wrap}
 .sub-row > span{font-weight:600}
 .sizes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 @media (max-width:520px){.sizes{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -116,6 +139,7 @@ h1 .hot{background:linear-gradient(90deg,#ff4d5e,#ffd23f 35%,#38d97a 65%,#4f8cff
 .rules summary{cursor:pointer;color:var(--text);font-weight:700}
 .rules ol{margin:12px 0 0;padding-left:20px;display:grid;gap:6px;max-width:62ch}
 .rules b{color:var(--text)}
+.version{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:center}
 
 /* ---------- game ---------- */
 #game{gap:10px;padding-block:10px 12px}
@@ -123,17 +147,19 @@ h1 .hot{background:linear-gradient(90deg,#ff4d5e,#ffd23f 35%,#38d97a 65%,#4f8cff
 .turn{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:6px 14px 6px 7px;border-radius:999px;
   background:color-mix(in srgb,var(--pc) 16%,var(--panel));border:1px solid color-mix(in srgb,var(--pc) 50%,transparent);
   transition:background .25s,border-color .25s}
+.turn.urgent{animation:urgent .8s ease-in-out infinite}
+@keyframes urgent{50%{border-color:var(--pc)}}
 .turn .dot{width:28px;height:28px;flex:none;border-radius:50%;
   background:radial-gradient(circle at 34% 30%,#fff 0 7%,var(--pc) 45%,color-mix(in srgb,var(--pc) 50%,#000) 100%);
   box-shadow:0 0 14px color-mix(in srgb,var(--pc) 60%,transparent)}
 .turn .txt{display:flex;flex-direction:column;min-width:0;line-height:1.15}
 #turnName{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#turnNote{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+#turnNote{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap}
 .moveno{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;padding:4px 8px;border-radius:8px;background:var(--panel)}
-.icon-btn{height:42px;min-width:42px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:14px;font-weight:600;cursor:pointer}
+.icon-btn{height:42px;min-width:42px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 9px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:14px;font-weight:600;cursor:pointer}
 .icon-btn:disabled{opacity:.35;cursor:default}
 .icon-btn svg{width:20px;height:20px;flex:none}
-@media (max-width:420px){.moveno,.undo-label{display:none}}
+@media (max-width:440px){.moveno{display:none}}
 #stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
 #board{display:block;touch-action:manipulation;cursor:pointer}
 .rail{flex:none;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
@@ -148,33 +174,67 @@ h1 .hot{background:linear-gradient(90deg,#ff4d5e,#ffd23f 35%,#38d97a 65%,#4f8cff
 /* ---------- overlays ---------- */
 .overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(6,7,12,.74);backdrop-filter:blur(6px);
   padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.card{width:100%;max-width:360px;display:grid;gap:10px;padding:26px 22px 22px;border-radius:20px;background:var(--panel);border:1px solid var(--line);text-align:center}
+.card{width:100%;max-width:380px;max-height:100%;overflow-y:auto;display:grid;gap:10px;padding:26px 22px 22px;border-radius:20px;background:var(--panel);border:1px solid var(--line);text-align:center}
 .card h2,.panel-head h2{font-size:28px;letter-spacing:-.02em;text-transform:none;color:var(--text);font-weight:800;text-wrap:balance}
 .card p{margin:0;color:var(--muted);line-height:1.5}
-.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .win-orb{width:84px;height:84px;margin:0 auto 6px;border-radius:50%;
   background:radial-gradient(circle at 34% 30%,#fff 0 7%,var(--wc) 45%,color-mix(in srgb,var(--wc) 50%,#000) 100%);
   box-shadow:0 0 40px color-mix(in srgb,var(--wc) 60%,transparent);animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{50%{transform:scale(1.07)}}
-.card .btn.primary{background:var(--wc,var(--text));color:#0a0c13}
+#winOv .btn.primary{background:var(--wc,var(--text));color:#0a0c13}
 .actions{display:grid;gap:8px;margin-top:10px}
-.sheet-ov{place-items:stretch}
+.menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.menu-grid .btn{font-size:14px;padding:0 10px}
+.sheet-ov{place-items:stretch;z-index:25}
+#askOv{z-index:40}
 .panel{width:100%;max-width:560px;height:100%;justify-self:center;display:flex;flex-direction:column;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden}
 .panel-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px 12px 18px;border-bottom:1px solid var(--line)}
 .panel-head h2{font-size:22px}
 .preview-wrap{flex:none;height:clamp(110px,22vh,170px);display:flex;align-items:center;justify-content:center;padding:12px;background:var(--pbg,#0a0c13);border-bottom:1px solid var(--line)}
-.panel-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr);gap:26px;align-content:start}
+.panel-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-content:start}
 .group{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .field{display:grid;gap:8px}
 .field-label{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-weight:600}
 .field-label output{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .field.is-off{opacity:.4}
 input[type="range"]{width:100%;accent-color:#eceff7}
-.toast{position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:30;max-width:calc(100% - 32px);
-  padding:9px 16px;border-radius:999px;background:var(--raise);border:1px solid var(--line);font-size:14px;
+.list{display:grid;gap:8px}
+.item{display:grid;gap:8px;padding:12px 14px;border-radius:12px;background:var(--ink);border:1px solid var(--line);min-width:0}
+.item-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
+.item-head b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-meta{font-size:13px;color:var(--muted);line-height:1.4}
+.item-actions{display:flex;gap:6px;flex-wrap:wrap}
+.empty{padding:18px;border-radius:12px;border:1px dashed var(--line);color:var(--muted);text-align:center;line-height:1.5}
+.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.stat{display:grid;gap:2px;padding:12px;border-radius:12px;background:var(--ink);border:1px solid var(--line);min-width:0}
+.stat b{font-family:var(--font-mono);font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.barrow{display:grid;grid-template-columns:minmax(0,7.5em) minmax(0,1fr) auto;align-items:center;gap:10px;font-size:14px}
+.barrow .nm{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.barrow .track{height:8px;border-radius:99px;background:var(--ink);overflow:hidden}
+.barrow .fill{height:100%;border-radius:99px;background:var(--c)}
+.ach{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:var(--ink);border:1px solid var(--line)}
+.ach .badge{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:13px;
+  background:radial-gradient(circle at 34% 30%,#fff 0 7%,var(--gold) 45%,#8a6500 100%);color:#2a1f00;box-shadow:0 0 14px rgba(255,210,63,.35)}
+.ach.locked .badge{background:var(--raise);color:var(--muted);box-shadow:none}
+.ach.locked .ach-name{color:var(--muted)}
+.ach-text{display:grid;gap:2px;min-width:0}
+.ach-text small{color:var(--muted);font-size:13px;line-height:1.35}
+.level{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--ink);border:1px solid var(--line)}
+.level .lv{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;background:var(--raise)}
+.level.done .lv{background:var(--gold);color:#2a1f00}
+.level.locked{opacity:.45}
+.level .lv-text{flex:1;min-width:0;display:grid;gap:2px}
+.level .lv-text small{color:var(--muted);font-size:13px}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.kv span:first-child{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:50;max-width:calc(100% - 32px);
+  padding:9px 16px;border-radius:999px;background:var(--raise);border:1px solid var(--line);font-size:14px;text-align:center;
   transform:translate(-50%,8px);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
-@media (prefers-reduced-motion:reduce){.atom,.win-orb{animation:none}.toast,.turn,.chip{transition:none}}
+.toast.gold{border-color:var(--gold);color:var(--gold)}
+@media (prefers-reduced-motion:reduce){.atom,.win-orb,.turn.urgent{animation:none}.toast,.turn,.chip{transition:none}}
 </style>
 <!-- APP:HEAD-END -->
 </head>
@@ -187,6 +247,24 @@ input[type="range"]{width:100%;accent-color:#eceff7}
       <h1 id="title">Chain <span class="hot">Reaction</span></h1>
       <p class="lede">Pass one phone around the table. Fill cells with orbs until they burst, steal your friends' cells, and be the last colour left on the board.</p>
     </header>
+
+    <section id="continueCard" class="continue" aria-labelledby="contTitle" hidden>
+      <div class="continue-top"><b id="contTitle">Game in progress</b><span id="contWhen" class="muted"></span></div>
+      <div id="contPlayers" class="pdots"></div>
+      <p id="contInfo"></p>
+      <div class="continue-actions">
+        <button type="button" id="contBtn" class="btn primary">Continue game</button>
+        <button type="button" id="contQuit" class="btn danger">Quit</button>
+      </div>
+    </section>
+
+    <nav class="tiles" aria-label="More">
+      <button type="button" class="tile" data-sheet="campaign"><b>Campaign</b><span id="tileCampaign">12 levels</span></button>
+      <button type="button" class="tile" data-sheet="saves"><b>Saved games</b><span id="tileSaves">None yet</span></button>
+      <button type="button" class="tile" data-sheet="stats"><b>Stats</b><span id="tileStats">No games yet</span></button>
+      <button type="button" class="tile" data-sheet="achievements"><b>Achievements</b><span id="tileAch">0 unlocked</span></button>
+      <button type="button" class="tile wide" data-sheet="data" id="tileDataBtn"><b>Backup and devices</b><span id="tileData">Never backed up</span></button>
+    </nav>
 
     <section class="block" aria-labelledby="playersH">
       <div class="block-head">
@@ -207,6 +285,17 @@ input[type="range"]{width:100%;accent-color:#eceff7}
           <button type="button" data-v="hard">Hard</button>
         </div>
       </div>
+      <div class="sub-row">
+        <span>Turn timer</span>
+        <div class="seg" id="turnLimit" role="group" aria-label="Turn timer">
+          <button type="button" data-v="0">Off</button>
+          <button type="button" data-v="10">10s</button>
+          <button type="button" data-v="20">20s</button>
+          <button type="button" data-v="30">30s</button>
+          <button type="button" data-v="60">60s</button>
+        </div>
+      </div>
+      <p class="hint">With a turn timer, the phone moves for anyone who runs out of time.</p>
     </section>
 
     <section class="block" aria-labelledby="boardH">
@@ -223,7 +312,7 @@ input[type="range"]{width:100%;accent-color:#eceff7}
     </section>
 
     <div class="start-row">
-      <button type="button" id="startBtn" class="btn primary big">Start game</button>
+      <button type="button" id="startBtn" class="btn primary big">Start new game</button>
       <button type="button" id="customizeBtn" class="btn">Customize look and feel</button>
       <button type="button" id="installBtn" class="btn ghost" hidden>Install as app</button>
     </div>
@@ -236,24 +325,25 @@ input[type="range"]{width:100%;accent-color:#eceff7}
         <li>Add one more and the cell <b>explodes</b>. It throws one orb into each neighbouring cell and turns those cells your colour.</li>
         <li>Explosions can set off more explosions, so one tap can flip half the board.</li>
         <li>Once everyone has played, a player with no orbs left is <b>out</b>. The last colour standing wins.</li>
+        <li>Your game saves itself after every move. Close the app any time and it opens right where you left off. A game only ends when someone wins or you choose <b>Quit game</b>.</li>
       </ol>
     </details>
+    <p class="version">Chain Reaction 4.0</p>
   </div>
 </section>
 
 <section id="game" class="screen" hidden>
   <header class="bar">
-    <div class="turn" aria-live="polite">
+    <div class="turn" id="turnChip" aria-live="polite">
       <span class="dot" aria-hidden="true"></span>
       <div class="txt"><b id="turnName">Red</b><span id="turnNote">your move</span></div>
     </div>
     <span id="moveNo" class="moveno">Move 0</span>
-    <button type="button" id="soundBtn" class="icon-btn" aria-label="Sound" aria-pressed="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path id="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path id="mute" d="M16 9l5 6M21 9l-5 6" hidden/></svg>
-    </button>
-    <button type="button" id="undoBtn" class="icon-btn" aria-label="Undo last move">
+    <button type="button" id="undoBtn" class="icon-btn" aria-label="Undo">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
-      <span class="undo-label">Undo</span>
+    </button>
+    <button type="button" id="redoBtn" class="icon-btn" aria-label="Redo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
     </button>
     <button type="button" id="menuBtn" class="icon-btn" aria-label="Game menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -266,13 +356,13 @@ input[type="range"]{width:100%;accent-color:#eceff7}
 <div id="winOv" class="overlay" hidden>
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
     <div class="win-orb" aria-hidden="true"></div>
-    <p class="eyebrow">Last colour standing</p>
+    <p class="eyebrow" id="winEyebrow">Last colour standing</p>
     <h2 id="winTitle">Red wins</h2>
     <p id="winStats"></p>
     <div class="actions">
       <button type="button" id="againBtn" class="btn primary">Play again</button>
       <button type="button" id="winUndoBtn" class="btn">Undo last move</button>
-      <button type="button" id="winSetupBtn" class="btn ghost">Change players</button>
+      <button type="button" id="winHomeBtn" class="btn ghost">Home</button>
     </div>
   </div>
 </div>
@@ -280,12 +370,19 @@ input[type="range"]{width:100%;accent-color:#eceff7}
 <div id="menuOv" class="overlay" hidden>
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
     <h2 id="menuTitle">Paused</h2>
-    <p>Restarting or leaving clears the current board.</p>
+    <p id="menuInfo">Your game saves itself after every move.</p>
     <div class="actions">
       <button type="button" id="resumeBtn" class="btn primary">Keep playing</button>
+      <div class="menu-grid">
+        <button type="button" id="saveCopyBtn" class="btn">Save a copy</button>
+        <button type="button" id="hintBtn" class="btn">Show a hint</button>
+        <button type="button" id="menuSoundBtn" class="btn">Sound: on</button>
+        <button type="button" id="fullBtn" class="btn">Full screen</button>
+      </div>
       <button type="button" id="menuCustomBtn" class="btn">Customize look and feel</button>
       <button type="button" id="restartBtn" class="btn">Restart with same players</button>
-      <button type="button" id="leaveBtn" class="btn ghost">Back to setup</button>
+      <button type="button" id="homeBtn" class="btn">Home (game stays saved)</button>
+      <button type="button" id="quitBtn" class="btn danger">Quit game</button>
     </div>
   </div>
 </div>
@@ -347,7 +444,7 @@ input[type="range"]{width:100%;accent-color:#eceff7}
           <input type="range" id="orbSize" data-set="orbSize" min="70" max="130" step="5">
         </div>
         <label class="opt" for="numbers"><span>Show orb counts<small>Prints the number of orbs in each cell</small></span><input type="checkbox" id="numbers" data-set="numbers"></label>
-        <p class="hint">Player colours are set on the setup screen. Tap a player's dot there.</p>
+        <p class="hint">Player colours are set on the home screen. Tap a player's dot there.</p>
       </section>
 
       <section class="group" aria-labelledby="gMotion">
@@ -367,9 +464,10 @@ input[type="range"]{width:100%;accent-color:#eceff7}
       </section>
 
       <section class="group" aria-labelledby="gFeel">
-        <h2 id="gFeel">Sound and touch</h2>
+        <h2 id="gFeel">Sound, touch and screen</h2>
         <label class="opt" for="sound"><span>Sound effects</span><input type="checkbox" id="sound" data-set="sound"></label>
         <label class="opt" for="vibrate"><span>Vibration<small>Only on phones that support it</small></span><input type="checkbox" id="vibrate" data-set="vibrate"></label>
+        <label class="opt" for="keepAwake"><span>Keep the screen on during games</span><input type="checkbox" id="keepAwake" data-set="keepAwake"></label>
       </section>
 
       <button type="button" id="resetLook" class="btn ghost">Reset look to defaults</button>
@@ -377,6 +475,27 @@ input[type="range"]{width:100%;accent-color:#eceff7}
   </div>
 </div>
 
+<div id="sheetOv" class="overlay sheet-ov" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <header class="panel-head">
+      <h2 id="sheetTitle">Saved games</h2>
+      <button type="button" id="sheetDone" class="btn primary small">Done</button>
+    </header>
+    <div class="panel-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<div id="askOv" class="overlay" hidden>
+  <div class="card" role="alertdialog" aria-modal="true" aria-labelledby="askTitle" aria-describedby="askText">
+    <h2 id="askTitle"></h2>
+    <p id="askText"></p>
+    <label class="sr" for="askInput">Name</label>
+    <input id="askInput" class="text-input" maxlength="40" autocomplete="off" hidden>
+    <div class="actions" id="askActions"></div>
+  </div>
+</div>
+
+<input type="file" id="restoreFile" accept=".json,application/json" hidden>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -384,6 +503,7 @@ input[type="range"]{width:100%;accent-color:#eceff7}
 "use strict";
 
 /* ---------- constants ---------- */
+const APP_VERSION = "4.0";
 const PALETTE = [
   {name:"Red",hex:"#ff4d5e"},   {name:"Green",hex:"#38d97a"},  {name:"Blue",hex:"#4f8cff"},  {name:"Yellow",hex:"#ffd23f"},
   {name:"Purple",hex:"#b06bff"},{name:"Cyan",hex:"#2fe0e0"},   {name:"Orange",hex:"#ff8a3d"},{name:"Pink",hex:"#ff5fc4"},
@@ -407,32 +527,84 @@ const SIZES = [
 const LIMITS = { customCols:[4, 20], customRows:[4, 36] };
 const SPEED = { slow:1.7, normal:1, fast:0.5, instant:0.12 };
 const LINE = { thin:1, normal:1.5, bold:2.5 };
+const LEVEL_NAMES = { easy:"Easy", normal:"Normal", hard:"Hard" };
 const LOOK_DEFAULTS = {
   gridMode:"fixed", gridColor:"#ffffff", gridWidth:"normal", gridOpacity:0.8, gridGlow:false,
   boardBg:"#0a0c13", orbStyle:"glossy", orbSize:1, numbers:false,
-  speed:"normal", spin:true, shake:true, lastMove:true, sound:true, vibrate:true
+  speed:"normal", spin:true, shake:true, lastMove:true, sound:true, vibrate:true, keepAwake:true
 };
 const ENUMS = { gridMode:["fixed","player"], gridWidth:Object.keys(LINE), orbStyle:["glossy","flat","glow","outline"], speed:Object.keys(SPEED) };
+const CAMPAIGN = [
+  {rows:9,  cols:6,  cpus:1, lvl:"easy"},
+  {rows:9,  cols:6,  cpus:2, lvl:"easy"},
+  {rows:12, cols:8,  cpus:1, lvl:"normal"},
+  {rows:12, cols:8,  cpus:2, lvl:"normal"},
+  {rows:12, cols:8,  cpus:3, lvl:"easy"},
+  {rows:16, cols:10, cpus:2, lvl:"normal"},
+  {rows:16, cols:10, cpus:1, lvl:"hard"},
+  {rows:16, cols:10, cpus:3, lvl:"normal"},
+  {rows:20, cols:12, cpus:2, lvl:"hard"},
+  {rows:20, cols:12, cpus:4, lvl:"normal"},
+  {rows:24, cols:14, cpus:3, lvl:"hard"},
+  {rows:24, cols:14, cpus:5, lvl:"hard"}
+];
+const ACHIEVEMENTS = [
+  {id:"first",    name:"First spark",       desc:"Finish your first game"},
+  {id:"games10",  name:"Regular",           desc:"Finish 10 games"},
+  {id:"games50",  name:"Veteran",           desc:"Finish 50 games"},
+  {id:"chain10",  name:"Chain gang",        desc:"Set off a chain 10 bursts deep"},
+  {id:"chain25",  name:"Supernova",         desc:"Set off a chain 25 bursts deep"},
+  {id:"chain50",  name:"Big bang",          desc:"Set off a chain 50 bursts deep"},
+  {id:"sweep",    name:"Clean sweep",       desc:"Knock out 2 players with one move"},
+  {id:"party",    name:"Full house",        desc:"Finish a game with 8 players"},
+  {id:"giant",    name:"Giant board",       desc:"Finish a game on a 14×24 board or bigger"},
+  {id:"marathon", name:"Marathon",          desc:"Finish a game that lasts 300 moves"},
+  {id:"blitz",    name:"Blitz",             desc:"Win a game in 40 moves or fewer"},
+  {id:"beatHard", name:"Beat the machine",  desc:"Win against a Hard CPU"},
+  {id:"camp1",    name:"Cadet",             desc:"Clear campaign level 1"},
+  {id:"camp6",    name:"Captain",           desc:"Clear campaign level 6"},
+  {id:"campAll",  name:"Commander",         desc:"Clear all 12 campaign levels"},
+  {id:"backup",   name:"Safe keeper",       desc:"Back up your saves"}
+];
+const MAX_SAVES = 30, MAX_RESULTS = 500, MAX_POINTS = 3, AUTOSAVE_HISTORY = 60, SAVE_HISTORY = 20;
 const HEX = /^#[0-9a-f]{6}$/i;
 const reduceMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const nameOf = hex => (PALETTE.find(c => c.hex.toLowerCase() === String(hex).toLowerCase()) || {}).name;
+const rid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + "s")}`;
 
-/* ---------- saved choices (per device only) ---------- */
-const store = {
-  get(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
-  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+/* ---------- storage: everything lives on this device only ---------- */
+const K = {
+  setup:"cr:setup", look:"cr:look", active:"cr:active", activePrev:"cr:active-prev", saves:"cr:saves",
+  results:"cr:results", ach:"cr:achievements", camp:"cr:campaign", device:"cr:device", points:"cr:restore-points", meta:"cr:meta"
 };
-const SETUP_KEY = "chain-reaction-setup", LOOK_KEY = "chain-reaction-look";
+let storageWarned = false;
+const store = {
+  raw(k){ try { return localStorage.getItem(k); } catch (e) { return null; } },
+  get(k, fallback){ const r = this.raw(k); if (r == null) return fallback === undefined ? null : fallback; try { return JSON.parse(r); } catch (e) { return fallback === undefined ? null : fallback; } },
+  set(k, v, quiet){
+    try { localStorage.setItem(k, JSON.stringify(v)); return true; }
+    catch (e) {
+      if (!quiet && !storageWarned) { storageWarned = true; toast("Storage is full. Back up your data, then delete old saved games."); }
+      return false;
+    }
+  },
+  del(k){ try { localStorage.removeItem(k); } catch (e) {} },
+  bytes(){ let n = 0; try { for (const k of Object.values(K)) { const v = localStorage.getItem(k); if (v) n += v.length * 2; } } catch (e) {} return n; }
+};
+
 const setup = {
   count:4, names:DEFAULT_NAMES.slice(), colors:DEFAULT_COLORS.slice(), cpu:new Array(8).fill(false),
-  cpuLevel:"normal", size:"xxl", customCols:14, customRows:24, v:3
+  cpuLevel:"normal", turnLimit:0, size:"xxl", customCols:14, customRows:24, v:3
 };
 const look = { ...LOOK_DEFAULTS };
-const saveSetup = () => store.set(SETUP_KEY, setup);
-const saveLook = () => store.set(LOOK_KEY, look);
+let device = null, saves = [], results = [], achievements = {}, campaign = { unlocked:1, done:{} }, meta = {};
+const saveSetup = () => store.set(K.setup, setup);
+const saveLook = () => store.set(K.look, look);
+const saveMeta = () => store.set(K.meta, meta, true);
 
 function loadSetup(saved){
   if (!saved || typeof saved !== "object") return;
@@ -440,7 +612,8 @@ function loadSetup(saved){
   if (Array.isArray(saved.names)) saved.names.slice(0, 8).forEach((n, k) => { if (typeof n === "string") setup.names[k] = n.slice(0, 14); });
   if (Array.isArray(saved.colors)) saved.colors.slice(0, 8).forEach((c, k) => { if (HEX.test(c)) setup.colors[k] = c; });
   if (Array.isArray(saved.cpu)) saved.cpu.slice(0, 8).forEach((v, k) => { setup.cpu[k] = !!v; });
-  if (["easy","normal","hard"].includes(saved.cpuLevel)) setup.cpuLevel = saved.cpuLevel;
+  if (LEVEL_NAMES[saved.cpuLevel]) setup.cpuLevel = saved.cpuLevel;
+  if ([0, 10, 20, 30, 60].includes(saved.turnLimit)) setup.turnLimit = saved.turnLimit;
   // Sizes saved before v2 belong to an older menu, so the XXL default wins once.
   if (saved.v >= 2 && (saved.size === "custom" || SIZES.some(s => s.id === saved.size))) setup.size = saved.size;
   for (const k of ["customCols","customRows"]) {
@@ -458,6 +631,33 @@ function loadLook(saved){
   }
   look.gridOpacity = Math.min(1, Math.max(0.15, look.gridOpacity));
   look.orbSize = Math.min(1.3, Math.max(0.7, look.orbSize));
+}
+function guessDeviceName(){
+  const ua = navigator.userAgent || "";
+  if (/Android/i.test(ua)) return /Mobile/i.test(ua) ? "Android phone" : "Android tablet";
+  if (/iPhone/.test(ua)) return "iPhone";
+  if (/iPad/.test(ua)) return "iPad";
+  if (/Windows/.test(ua)) return "Windows PC";
+  if (/Macintosh/.test(ua)) return "Mac";
+  if (/Linux/.test(ua)) return "Linux PC";
+  return "This device";
+}
+function loadAll(){
+  // Older versions kept setup and look under different keys.
+  if (!store.raw(K.setup) && store.raw("chain-reaction-setup")) store.set(K.setup, store.get("chain-reaction-setup"));
+  if (!store.raw(K.look) && store.raw("chain-reaction-look")) store.set(K.look, store.get("chain-reaction-look"));
+  const oldSetup = store.get(K.setup);
+  loadSetup(oldSetup);
+  loadLook(store.get(K.look));
+  if (!store.raw(K.look) && oldSetup && typeof oldSetup.sound === "boolean") look.sound = oldSetup.sound;
+  device = store.get(K.device);
+  if (!device || typeof device.id !== "string") { device = { id:rid(), name:guessDeviceName(), created:Date.now() }; store.set(K.device, device); }
+  saves = (store.get(K.saves, []) || []).filter(s => s && s.id && validGame(s.game));
+  results = (store.get(K.results, []) || []).filter(r => r && r.id && Array.isArray(r.p));
+  achievements = store.get(K.ach, {}) || {};
+  const c = store.get(K.camp);
+  campaign = c && typeof c === "object" ? { unlocked:Math.max(1, c.unlocked | 0), done:c.done || {} } : { unlocked:1, done:{} };
+  meta = store.get(K.meta, {}) || {};
 }
 
 /* ---------- rules engine (pure, shared by the board and the CPU) ---------- */
@@ -535,9 +735,9 @@ function legalMoves(T, p){
   for (let i = 0; i < G.n; i++) { const o = T.owner[i]; if (o === -1 || o === p) m.push(i); }
   return m;
 }
-function cpuChoose(p){
+function cpuChoose(p, levelOverride){
   const othersMoved = P.every((q, k) => k === p || q.out || q.moved);
-  const level = setup.cpuLevel;
+  const level = levelOverride || P[p].lvl || "normal";
   const noise = level === "easy" ? 14 : 0.8;
   const scored = legalMoves(S, p).map(i => {
     const T = simulate(S, i, p);
@@ -572,10 +772,11 @@ function cpuChoose(p){
 
 /* ---------- game state ---------- */
 let G = null, S = null, P = [], cur = 0, moveNo = 0, lastMove = -1;
-let busy = false, over = false, history = [], gameId = 0, cpuTimer = 0, chainLen = 0;
-let anim = null, flash = null, screen = "setup", openPal = -1;
+let busy = false, over = false, history = [], redo = [], gameId = 0, cpuTimer = 0, chainLen = 0;
+let gm = null;                                 // per-game info: id, mode, level, clock, timer, result
+let anim = null, flash = null, hint = null, screen = "setup", openPal = -1, outsThisMove = 0;
 
-/* ---------- sound and touch ---------- */
+/* ---------- sound, touch and screen ---------- */
 let actx = null;
 function ensureAudio(){
   if (!look.sound) return;
@@ -599,16 +800,91 @@ function blip(freq, dur, type, vol, delay){
   } catch (e) {}
 }
 function buzz(ms){ if (!look.vibrate) return; try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
-
-let toastTimer = 0;
-function toast(msg){
-  const el = $("#toast");
-  el.textContent = msg; el.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), 1700);
+let wakeLock = null;
+async function keepAwake(on){
+  try {
+    if (on && look.keepAwake && !wakeLock && "wakeLock" in navigator && document.visibilityState === "visible") {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } else if ((!on || !look.keepAwake) && wakeLock) {
+      await wakeLock.release(); wakeLock = null;
+    }
+  } catch (e) { wakeLock = null; }
 }
 
-/* ---------- setup screen ---------- */
+const toastQ = [];
+let toastBusy = false;
+function toast(msg, gold){
+  if (toastQ.length && toastQ[toastQ.length - 1][0] === msg) return;
+  if (toastQ.length > 3) toastQ.shift();
+  toastQ.push([msg, !!gold]);
+  if (!toastBusy) nextToast();
+}
+function nextToast(){
+  const el = $("#toast"), item = toastQ.shift();
+  if (!item) { toastBusy = false; return; }
+  toastBusy = true;
+  el.textContent = item[0];
+  el.classList.toggle("gold", item[1]);
+  el.classList.add("show");
+  setTimeout(() => { el.classList.remove("show"); setTimeout(nextToast, 220); }, item[1] ? 2400 : 1700);
+}
+
+/* ---------- time helpers ---------- */
+function ago(ts){
+  if (!ts) return "never";
+  const s = Math.max(0, (Date.now() - ts) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return plural(Math.floor(s / 3600), "hour") + " ago";
+  if (s < 86400 * 30) return plural(Math.floor(s / 86400), "day") + " ago";
+  return new Date(ts).toLocaleDateString();
+}
+function clock(ms){
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = s % 60;
+  return h ? `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}` : `${m}:${String(ss).padStart(2, "0")}`;
+}
+function duration(sec){
+  const h = Math.floor(sec / 3600), m = Math.round(sec / 60) % 60;
+  return h ? `${h}h ${m}m` : `${Math.max(1, Math.round(sec / 60))} min`;
+}
+function when(ts){ return new Date(ts).toLocaleString([], { dateStyle:"medium", timeStyle:"short" }); }
+
+/* ---------- confirm and input dialogs (the viewer has no native ones) ---------- */
+let askResolve = null;
+function ask({ title, text, input, buttons }){
+  return new Promise(resolve => {
+    if (askResolve) askResolve(null);
+    askResolve = resolve;
+    $("#askTitle").textContent = title;
+    $("#askText").textContent = text || "";
+    $("#askText").hidden = !text;
+    const inp = $("#askInput");
+    inp.hidden = input === undefined;
+    if (input !== undefined) inp.value = input;
+    $("#askActions").innerHTML = buttons.map((b, n) =>
+      `<button type="button" class="btn ${b.kind || ""}" data-n="${n}">${esc(b.label)}</button>`).join("");
+    $("#askOv").hidden = false;
+    setTimeout(() => (input !== undefined ? inp : $("#askActions .btn")).focus(), 30);
+    $("#askOv")._buttons = buttons;
+  });
+}
+function closeAsk(value){
+  $("#askOv").hidden = true;
+  const r = askResolve; askResolve = null;
+  if (r) r(value);
+}
+$("#askActions").addEventListener("click", e => {
+  const b = e.target.closest("button[data-n]");
+  if (!b) return;
+  const def = $("#askOv")._buttons[+b.dataset.n];
+  closeAsk(def.value === undefined ? null : (!$("#askInput").hidden ? { value:def.value, text:$("#askInput").value.trim() } : def.value));
+});
+$("#askInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") { const first = $("#askActions .btn.primary"); if (first) first.click(); }
+});
+
+/* ---------- home screen ---------- */
 function boardSize(){
   if (setup.size === "custom") return { rows:setup.customRows, cols:setup.customCols };
   return SIZES.find(s => s.id === setup.size) || SIZES[4];
@@ -647,6 +923,7 @@ function renderSetup(){
     list.appendChild(row);
   }
   $$("#cpuLevel button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === setup.cpuLevel)));
+  $$("#turnLimit button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === setup.turnLimit)));
   $("#sizes").innerHTML =
     SIZES.map(s => `<button type="button" class="size" data-size="${s.id}" aria-pressed="${s.id === setup.size}"><b>${s.cols}&times;${s.rows}</b><span>${s.label}</span></button>`).join("") +
     `<button type="button" class="size custom" data-size="custom" aria-pressed="${setup.size === "custom"}"><span>Custom size</span><b>${setup.customCols}&times;${setup.customRows}</b></button>`;
@@ -670,6 +947,29 @@ function setPlayerColor(k, hex, swap){
   setup.colors[k] = hex;
   saveSetup();
 }
+function renderHome(){
+  const act = readActive();
+  const card = $("#continueCard");
+  card.hidden = !act;
+  if (act) {
+    const leader = act.P.find((q, k) => k === act.cur) || act.P[0];
+    card.style.setProperty("--c", leader.color);
+    $("#contTitle").textContent = act.over ? "Game finished" : act.mode === "campaign" ? `Campaign level ${act.level}` : "Game in progress";
+    $("#contWhen").textContent = `saved ${ago(act.savedAt)}`;
+    $("#contPlayers").innerHTML = act.P.map(q => `<span class="pdot${q.out ? " out" : ""}" style="--c:${q.color}" title="${esc(q.name)}"></span>`).join("");
+    $("#contInfo").textContent = `${act.cols}×${act.rows} board · move ${act.moveNo} · ${clock(act.elapsed || 0)} played · ${act.over ? "see the result" : leader.name + " to move"}`;
+  }
+  $("#startBtn").textContent = act ? "Start a new game" : "Start game";
+  $("#tileCampaign").textContent = campaignCleared() >= CAMPAIGN.length ? "All levels cleared" : `Level ${Math.min(campaign.unlocked, CAMPAIGN.length)} of ${CAMPAIGN.length}`;
+  $("#tileSaves").textContent = saves.length ? plural(saves.length, "saved game") : "None yet";
+  $("#tileStats").textContent = results.length ? plural(results.length, "game") + " finished" : "No games yet";
+  $("#tileAch").textContent = `${Object.keys(achievements).filter(id => ACHIEVEMENTS.some(a => a.id === id)).length} of ${ACHIEVEMENTS.length} unlocked`;
+  const stale = hasData() && (!meta.lastBackup || Date.now() - meta.lastBackup > 7 * 86400000);
+  $("#tileDataBtn").classList.toggle("warn", stale);
+  $("#tileData").textContent = `${device.name} · ${meta.lastBackup ? "backed up " + ago(meta.lastBackup) : "never backed up"}`;
+}
+function hasData(){ return !!(results.length || saves.length || store.raw(K.active)); }
+
 $("#minus").addEventListener("click", () => { setup.count = Math.max(2, setup.count - 1); openPal = -1; saveSetup(); renderSetup(); });
 $("#plus").addEventListener("click", () => { setup.count = Math.min(8, setup.count + 1); openPal = -1; saveSetup(); renderSetup(); });
 $("#plist").addEventListener("click", e => {
@@ -685,6 +985,11 @@ $("#cpuLevel").addEventListener("click", e => {
   if (!b) return;
   setup.cpuLevel = b.dataset.v; saveSetup(); renderSetup();
 });
+$("#turnLimit").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]");
+  if (!b) return;
+  setup.turnLimit = +b.dataset.v; saveSetup(); renderSetup();
+});
 $("#sizes").addEventListener("click", e => {
   const b = e.target.closest("button[data-size]");
   if (!b) return;
@@ -697,21 +1002,48 @@ $("#customSize").addEventListener("click", e => {
   setup[k] = Math.min(hi, Math.max(lo, setup[k] + +b.dataset.d));
   saveSetup(); renderSetup();
 });
-$("#startBtn").addEventListener("click", () => { ensureAudio(); newGame(); });
+$("#startBtn").addEventListener("click", async () => {
+  ensureAudio();
+  if (!(await clearWayForNewGame())) return;
+  startFree();
+});
+$("#contBtn").addEventListener("click", () => { ensureAudio(); resumeActive(); });
+$("#contQuit").addEventListener("click", async () => {
+  const v = await ask({ title:"Quit this game?", text:"It will be removed from this device. Saved copies are not affected.",
+    buttons:[{ label:"Quit game", kind:"danger", value:true }, { label:"Keep it", kind:"ghost", value:false }] });
+  if (v) { clearActive(); renderHome(); toast("Game quit"); }
+});
+$$(".tile[data-sheet]").forEach(t => t.addEventListener("click", () => openSheet(t.dataset.sheet)));
+
+/* Before a new game replaces the one in progress, let the player keep it. */
+async function clearWayForNewGame(){
+  const act = readActive();
+  if (!act || act.over) return true;
+  const v = await ask({
+    title:"You have a game in progress",
+    text:"Starting a new game ends it. You can keep a copy in Saved games first.",
+    buttons:[{ label:"Save a copy, then start", kind:"primary", value:"save" }, { label:"End it and start", kind:"danger", value:"end" }, { label:"Cancel", kind:"ghost", value:null }]
+  });
+  if (!v) return false;
+  if (v === "save") addSave(act, null);
+  return true;
+}
 
 function showScreen(name){
   screen = name;
   $("#setup").hidden = name !== "setup";
   $("#game").hidden = name !== "game";
+  meta.screen = name; saveMeta();
   applyPageBg();
-  if (name === "game") layout();
+  if (name === "game") { layout(); armBack(); keepAwake(true); }
+  else { keepAwake(false); renderHome(); }
 }
 function applyPageBg(){
   const bg = screen === "game" ? look.boardBg : "";
   document.body.style.background = bg;
   document.documentElement.style.background = bg;
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", bg || "#0a0c13");
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute("content", bg || "#0a0c13");
 }
 
 /* ---------- customize panel ---------- */
@@ -780,6 +1112,7 @@ $$('#customOv input[type="checkbox"][data-set]').forEach(el => el.addEventListen
   if (el.dataset.set === "sound" && el.checked) ensureAudio();
   if (el.dataset.set === "vibrate" && el.checked) buzz(20);
   applyLook();
+  if (el.dataset.set === "keepAwake") keepAwake(screen === "game");
 }));
 $("#resetLook").addEventListener("click", () => { Object.assign(look, LOOK_DEFAULTS); applyLook(); toast("Look reset to defaults"); });
 $("#customDone").addEventListener("click", closeCustomize);
@@ -794,34 +1127,210 @@ function applyLook(){
   layout();
   layoutPreview();
 }
-function syncSound(){
-  const b = $("#soundBtn");
-  b.setAttribute("aria-pressed", String(look.sound));
-  b.setAttribute("aria-label", look.sound ? "Sound on" : "Sound off");
-  b.querySelector("#waves").toggleAttribute("hidden", !look.sound);
-  b.querySelector("#mute").toggleAttribute("hidden", look.sound);
+function syncSound(){ $("#menuSoundBtn").textContent = look.sound ? "Sound: on" : "Sound: off"; }
+
+/* ---------- saving: board encoding ---------- */
+function encBoard(count, owner){
+  let c = "", o = "";
+  for (let i = 0; i < count.length; i++) { c += count[i].toString(36); o += owner[i] < 0 ? "." : owner[i]; }
+  return { c, o };
+}
+function decBoard(e, n){
+  const count = new Uint8Array(n), owner = new Int8Array(n);
+  for (let i = 0; i < n; i++) { count[i] = parseInt(e.c[i], 36) || 0; owner[i] = e.o[i] === "." ? -1 : +e.o[i]; }
+  return { count, owner };
+}
+function snap(){
+  return { b:encBoard(S.count, S.owner), P:P.map(q => [q.moved ? 1 : 0, q.out ? 1 : 0]), cur, moveNo, lastMove };
+}
+function applySnap(h){
+  const d = decBoard(h.b, G.n);
+  S.count = d.count; S.owner = d.owner;
+  P.forEach((q, k) => { q.moved = !!h.P[k][0]; q.out = !!h.P[k][1]; });
+  cur = h.cur; moveNo = h.moveNo; lastMove = h.lastMove;
+}
+function serializeGame(historyLen){
+  return {
+    v:1, id:gm.id, mode:gm.mode, level:gm.level || 0, rows:G.rows, cols:G.cols,
+    b:encBoard(S.count, S.owner),
+    P:P.map(q => ({ name:q.name, color:q.color, cpu:!!q.cpu, lvl:q.lvl || "", moved:!!q.moved, out:!!q.out })),
+    cur, moveNo, lastMove, over,
+    startedAt:gm.startedAt, elapsed:Math.round(gm.elapsed), longestChain:gm.longestChain, hints:gm.hints,
+    turnLimit:gm.turnLimit, turnLeft:Math.round(gm.turnLeft), resultId:gm.resultId || null,
+    savedAt:Date.now(), device:device.name, app:APP_VERSION,
+    history:history.slice(-historyLen), redo:redo.slice(-20)
+  };
+}
+function validGame(o){
+  try {
+    if (!o || o.v !== 1) return false;
+    const { rows, cols } = o;
+    if (!Number.isInteger(rows) || !Number.isInteger(cols) || rows < 2 || cols < 2 || rows > 40 || cols > 40) return false;
+    if (!o.b || typeof o.b.c !== "string" || typeof o.b.o !== "string" || o.b.c.length !== rows * cols || o.b.o.length !== rows * cols) return false;
+    if (!Array.isArray(o.P) || o.P.length < 2 || o.P.length > 8) return false;
+    if (!o.P.every(q => q && typeof q.name === "string" && HEX.test(q.color))) return false;
+    return Number.isInteger(o.cur) && o.cur >= 0 && o.cur < o.P.length;
+  } catch (e) { return false; }
+}
+function loadGame(o){
+  G = makeGeom(o.rows, o.cols);
+  S = decBoard(o.b, G.n);
+  P = o.P.map(q => ({ name:q.name.slice(0, 14), color:q.color, cpu:!!q.cpu, lvl:LEVEL_NAMES[q.lvl] ? q.lvl : (q.cpu ? "normal" : ""), moved:!!q.moved, out:!!q.out }));
+  cur = o.cur; moveNo = o.moveNo | 0; lastMove = Number.isInteger(o.lastMove) ? o.lastMove : -1; over = !!o.over;
+  const okSnap = h => h && h.b && h.b.c && h.b.c.length === G.n && Array.isArray(h.P) && h.P.length === P.length;
+  history = (o.history || []).filter(okSnap);
+  redo = (o.redo || []).filter(okSnap);
+  gm = {
+    id:o.id || rid(), mode:o.mode === "campaign" ? "campaign" : "free", level:o.level | 0,
+    startedAt:o.startedAt || Date.now(), elapsed:+o.elapsed || 0, longestChain:o.longestChain | 0, hints:o.hints | 0,
+    turnLimit:[0, 10, 20, 30, 60].includes(o.turnLimit) ? o.turnLimit : 0, turnLeft:+o.turnLeft || 0, resultId:o.resultId || null
+  };
+  if (!gm.turnLeft) gm.turnLeft = gm.turnLimit * 1000;
+  busy = false; anim = null; flash = null; hint = null; chainLen = 0;
+  gameId++; clearTimeout(cpuTimer);
 }
 
-/* ---------- game flow ---------- */
-function newGame(){
-  const sz = boardSize();
-  G = makeGeom(sz.rows, sz.cols);
-  S = { count:new Uint8Array(G.n), owner:new Int8Array(G.n).fill(-1) };
-  P = [];
-  for (let k = 0; k < setup.count; k++) {
-    P.push({ name:(setup.names[k] || "").trim() || `Player ${k + 1}`, color:setup.colors[k], cpu:setup.cpu[k], moved:false, out:false });
+/* ---------- autosave: the game in progress is written after every change ---------- */
+let lastAutosave = 0;
+function autosave(){
+  if (!G || !gm) return;
+  const prev = store.raw(K.active);
+  if (prev) { try { localStorage.setItem(K.activePrev, prev); } catch (e) {} }
+  store.set(K.active, serializeGame(AUTOSAVE_HISTORY));
+  lastAutosave = performance.now();
+}
+function readActive(){
+  for (const k of [K.active, K.activePrev]) {
+    const o = store.get(k);
+    if (validGame(o)) return o;
   }
-  cur = 0; moveNo = 0; lastMove = -1; busy = false; over = false; history = []; anim = null; flash = null; chainLen = 0;
-  gameId++; clearTimeout(cpuTimer);
+  return null;
+}
+function clearActive(){
+  store.del(K.active); store.del(K.activePrev);
+  meta.screen = "setup"; saveMeta();
+}
+function resumeActive(){
+  const act = readActive();
+  if (!act) { toast("That game could not be found"); renderHome(); return; }
+  loadGame(act);
+  enterGame();
+}
+function enterGame(){
   $("#winOv").hidden = true; $("#menuOv").hidden = true;
   showScreen("game");
   updateUI();
-  maybeCpu();
+  if (over) { const w = P.findIndex(q => !q.out); showWinner(w, true); }
+  else if (unstable(G, S).length) resolve(cur, gameId);
+  else maybeCpu();
+}
+
+/* ---------- saved games ---------- */
+function defaultSaveName(o){
+  const names = o.P.map(q => q.name).slice(0, 3).join(", ") + (o.P.length > 3 ? ` +${o.P.length - 3}` : "");
+  return o.mode === "campaign" ? `Campaign level ${o.level}` : names;
+}
+function addSave(o, name){
+  const copy = JSON.parse(JSON.stringify(o));
+  copy.history = (copy.history || []).slice(-SAVE_HISTORY);
+  const entry = { id:rid(), name:(name || defaultSaveName(copy)).slice(0, 40), at:Date.now(), device:device.name, deviceId:device.id, game:copy };
+  saves.unshift(entry);
+  if (saves.length > MAX_SAVES) saves.length = MAX_SAVES;
+  if (!store.set(K.saves, saves)) { saves.shift(); return null; }
+  toast(`Saved as "${entry.name}"`);
+  return entry;
+}
+async function saveCopyFromGame(){
+  if (!G) return;
+  const o = serializeGame(SAVE_HISTORY);
+  const r = await ask({ title:"Save a copy", text:`Saved games stay on this device until you delete them. You have ${saves.length} of ${MAX_SAVES}.`,
+    input:defaultSaveName(o), buttons:[{ label:"Save", kind:"primary", value:true }, { label:"Cancel", kind:"ghost", value:false }] });
+  if (r && r.value) addSave(o, r.text || null);
+}
+
+/* ---------- campaign, stats and achievements ---------- */
+const campaignCleared = () => Object.keys(campaign.done).length;
+function unlock(id){
+  if (achievements[id] || !ACHIEVEMENTS.some(a => a.id === id)) return;
+  achievements[id] = Date.now();
+  store.set(K.ach, achievements);
+  const a = ACHIEVEMENTS.find(x => x.id === id);
+  toast(`Achievement unlocked: ${a.name}`, true);
+  blip(880, 0.15, "sine", 0.08); blip(1320, 0.2, "sine", 0.07, 0.12);
+}
+function recordResult(w){
+  const r = {
+    id:rid(), at:Date.now(), dur:Math.round(gm.elapsed / 1000), rows:G.rows, cols:G.cols, moves:moveNo,
+    chain:gm.longestChain, hints:gm.hints, mode:gm.mode, level:gm.level || 0, dev:device.name, devId:device.id, w,
+    p:P.map(q => ({ n:q.name, c:q.color, cpu:q.cpu ? 1 : 0, l:q.cpu ? q.lvl : "" }))
+  };
+  results.push(r);
+  if (results.length > MAX_RESULTS) results.splice(0, results.length - MAX_RESULTS);
+  store.set(K.results, results);
+  gm.resultId = r.id;
+
+  const humanWon = !r.p[w].cpu;
+  unlock("first");
+  if (results.length >= 10) unlock("games10");
+  if (results.length >= 50) unlock("games50");
+  if (r.p.length === 8) unlock("party");
+  if (r.rows * r.cols >= 14 * 24) unlock("giant");
+  if (r.moves >= 300) unlock("marathon");
+  if (humanWon && r.moves <= 40) unlock("blitz");
+  if (humanWon && r.p.some(q => q.cpu && q.l === "hard")) unlock("beatHard");
+  if (gm.mode === "campaign" && w === 0) {
+    if (!campaign.done[gm.level]) campaign.done[gm.level] = Date.now();
+    campaign.unlocked = Math.max(campaign.unlocked, Math.min(CAMPAIGN.length, gm.level + 1));
+    store.set(K.camp, campaign);
+    if (gm.level >= 1) unlock("camp1");
+    if (gm.level >= 6) unlock("camp6");
+    if (campaignCleared() >= CAMPAIGN.length) unlock("campAll");
+  }
+}
+function unrecordResult(){
+  if (!gm || !gm.resultId) return;
+  results = results.filter(r => r.id !== gm.resultId);
+  store.set(K.results, results);
+  gm.resultId = null;
+}
+
+/* ---------- game flow ---------- */
+function newGame({ rows, cols, players, mode, level, turnLimit }){
+  G = makeGeom(rows, cols);
+  S = { count:new Uint8Array(G.n), owner:new Int8Array(G.n).fill(-1) };
+  P = players.map(q => ({ ...q, moved:false, out:false }));
+  cur = 0; moveNo = 0; lastMove = -1; busy = false; over = false; history = []; redo = [];
+  anim = null; flash = null; hint = null; chainLen = 0;
+  gm = { id:rid(), mode, level:level || 0, startedAt:Date.now(), elapsed:0, longestChain:0, hints:0, turnLimit, turnLeft:turnLimit * 1000, resultId:null };
+  gameId++; clearTimeout(cpuTimer);
+  autosave();
+  askPersist();
+  enterGame();
+}
+function startFree(){
+  const sz = boardSize();
+  const players = [];
+  for (let k = 0; k < setup.count; k++) {
+    players.push({ name:(setup.names[k] || "").trim() || `Player ${k + 1}`, color:setup.colors[k], cpu:setup.cpu[k], lvl:setup.cpu[k] ? setup.cpuLevel : "" });
+  }
+  newGame({ rows:sz.rows, cols:sz.cols, players, mode:"free", level:0, turnLimit:setup.turnLimit });
+}
+function startCampaign(level){
+  const L = CAMPAIGN[level - 1];
+  const players = [{ name:(setup.names[0] || "").trim() || "You", color:setup.colors[0], cpu:false, lvl:"" }];
+  for (let k = 1; k <= L.cpus; k++) {
+    players.push({ name:nameOf(setup.colors[k]) || `Player ${k + 1}`, color:setup.colors[k], cpu:true, lvl:L.lvl });
+  }
+  newGame({ rows:L.rows, cols:L.cols, players, mode:"campaign", level, turnLimit:0 });
+}
+function restartSame(){
+  const players = P.map(q => ({ name:q.name, color:q.color, cpu:q.cpu, lvl:q.lvl }));
+  newGame({ rows:G.rows, cols:G.cols, players, mode:gm.mode, level:gm.level, turnLimit:gm.turnLimit });
 }
 
 function pushHistory(){
-  history.push({ count:S.count.slice(), owner:S.owner.slice(), P:P.map(q => ({ moved:q.moved, out:q.out })), cur, moveNo, lastMove });
-  if (history.length > 400) history.shift();
+  history.push(snap());
+  if (history.length > 200) history.shift();
 }
 
 async function place(i){
@@ -834,15 +1343,18 @@ async function place(i){
     return;
   }
   pushHistory();
+  redo = [];
+  hint = null;
   const p = cur;
   S.count[i]++; S.owner[i] = p; P[p].moved = true; lastMove = i; moveNo++;
   blip(560, 0.07, "sine", 0.09);
+  autosave();                                  // saved before the chain, so a closed app replays it on return
   await resolve(p, gameId);
 }
 
 /* Runs explosion waves until the board is calm or someone has won, then passes the turn. */
 async function resolve(p, id){
-  busy = true; chainLen = 0;
+  busy = true; chainLen = 0; outsThisMove = 0;
   updateUI();
   let w = 0;
   while (true) {
@@ -852,12 +1364,18 @@ async function resolve(p, id){
     if (id !== gameId) return;               // game was restarted or left mid-chain
     applyWave(G, S, u);
     w++; chainLen = w;
-    markOuts();
+    if (w > gm.longestChain) gm.longestChain = w;
+    if (!P[p].cpu) {
+      if (w >= 10) unlock("chain10");
+      if (w >= 25) unlock("chain25");
+      if (w >= 50) unlock("chain50");
+    }
+    markOuts(p);
     updateUI();
     if (checkWin()) { busy = false; return; }
     if (w > 5000) break;
   }
-  markOuts();
+  markOuts(p);
   busy = false; chainLen = 0;
   if (checkWin()) return;
   advance();
@@ -874,10 +1392,14 @@ function animateWave(u, p, w){
   return new Promise(res => setTimeout(() => { anim = null; res(); }, dur));
 }
 
-function markOuts(){
+function markOuts(mover){
   const t = tally(S, P.length);
   P.forEach((q, k) => {
-    if (!q.out && q.moved && t[k] === 0) { q.out = true; toast(`${q.name} is out`); }
+    if (!q.out && q.moved && t[k] === 0) {
+      q.out = true; outsThisMove++;
+      toast(`${q.name} is out`);
+      if (outsThisMove >= 2 && !P[mover].cpu) unlock("sweep");
+    }
   });
 }
 
@@ -886,7 +1408,10 @@ function checkWin(){
   if (P.length > 1 && alive.length === 1) {
     over = true;
     clearTimeout(cpuTimer);
-    showWinner(P.indexOf(alive[0]));
+    const w = P.indexOf(alive[0]);
+    if (!gm.resultId) recordResult(w);
+    autosave();
+    showWinner(w, false);
     return true;
   }
   return false;
@@ -896,17 +1421,20 @@ function advance(){
   let k = cur;
   do { k = (k + 1) % P.length; } while (P[k].out);
   cur = k;
+  gm.turnLeft = gm.turnLimit * 1000;
+  autosave();
   updateUI();
   maybeCpu();
 }
 
+function overlayOpen(){ return !$("#menuOv").hidden || !$("#customOv").hidden || !$("#sheetOv").hidden || !$("#askOv").hidden; }
 function maybeCpu(){
   clearTimeout(cpuTimer);
   if (over || busy || !P[cur] || !P[cur].cpu || screen !== "game") return;
   const id = gameId;
   const delay = reduceMotion ? 250 : Math.max(120, 550 * (SPEED[look.speed] || 1));
   cpuTimer = setTimeout(() => {
-    if (id !== gameId || over || busy || !P[cur].cpu || !$("#menuOv").hidden || !$("#customOv").hidden) return;
+    if (id !== gameId || over || busy || !P[cur].cpu || screen !== "game" || overlayOpen()) return;
     place(cpuChoose(cur));
   }, delay);
 }
@@ -914,31 +1442,90 @@ function maybeCpu(){
 function undo(){
   if (busy || !history.length) return;
   const anyHuman = P.some(q => !q.cpu);
+  const before = snap();
   let h = history.pop();
   // Step back past CPU moves so the undo lands on a human's turn.
   while (anyHuman && P[h.cur].cpu && history.length) h = history.pop();
-  S.count = h.count; S.owner = h.owner;
-  P.forEach((q, k) => { q.moved = h.P[k].moved; q.out = h.P[k].out; });
-  cur = h.cur; moveNo = h.moveNo; lastMove = h.lastMove;
-  over = false; anim = null; flash = null;
+  redo.push(before);
+  if (over) unrecordResult();
+  applySnap(h);
+  over = false; anim = null; flash = null; hint = null;
+  gm.turnLeft = gm.turnLimit * 1000;
   clearTimeout(cpuTimer);
   $("#winOv").hidden = true;
+  autosave();
   updateUI();
   toast("Move undone");
   maybeCpu();
 }
+function redoMove(){
+  if (busy || !redo.length) return;
+  pushHistory();
+  applySnap(redo.pop());
+  over = false; anim = null; hint = null;
+  gm.turnLeft = gm.turnLimit * 1000;
+  clearTimeout(cpuTimer);
+  autosave();
+  updateUI();
+  toast("Move redone");
+  if (!checkWin()) maybeCpu();
+}
 
-function showWinner(k){
+function showWinner(k, restored){
   const q = P[k];
+  const camp = gm.mode === "campaign", humanWon = !q.cpu;
   $("#winOv").style.setProperty("--wc", q.color);
-  $("#winTitle").textContent = `${q.name} wins`;
+  $("#winEyebrow").textContent = camp ? `Campaign level ${gm.level}` : "Last colour standing";
+  $("#winTitle").textContent = camp ? (k === 0 ? "Level cleared" : `${q.name} wins`) : `${q.name} wins`;
   const orbs = tally(S, P.length)[k];
-  $("#winStats").textContent = `${moveNo} moves played. ${q.name} holds all ${orbs} orbs on the board.`;
+  $("#winStats").textContent = `${moveNo} moves in ${clock(gm.elapsed)}. ${q.name} holds all ${orbs} orbs. Longest chain: ${gm.longestChain}.`;
+  const next = camp && k === 0 && gm.level < CAMPAIGN.length;
+  $("#againBtn").textContent = camp ? (k === 0 ? (next ? "Next level" : "Back to campaign") : "Try again") : "Play again";
+  $("#againBtn").dataset.act = camp ? (k === 0 ? (next ? "next" : "campaign") : "retry") : "again";
   $("#winOv").hidden = false;
-  [523, 659, 784, 1046].forEach((f, n) => blip(f, 0.22, "sine", 0.09, n * 0.11));
-  buzz(60);
+  if (!restored) {
+    if (humanWon) [523, 659, 784, 1046].forEach((f, n) => blip(f, 0.22, "sine", 0.09, n * 0.11));
+    else [392, 330, 262].forEach((f, n) => blip(f, 0.25, "triangle", 0.08, n * 0.14));
+    buzz(60);
+  }
   updateUI();
   setTimeout(() => $("#againBtn").focus(), 50);
+}
+
+/* ---------- clock and turn timer ---------- */
+let lastTick = 0;
+setInterval(() => {
+  const now = performance.now();
+  const dt = lastTick ? Math.min(1000, now - lastTick) : 0;
+  lastTick = now;
+  if (!G || !gm || screen !== "game" || over || document.hidden || overlayOpen()) return;
+  gm.elapsed += dt;
+  if (gm.turnLimit && !busy && !P[cur].cpu) {
+    gm.turnLeft -= dt;
+    if (gm.turnLeft <= 0) {
+      gm.turnLeft = 0;
+      toast(`Time's up. The phone moved for ${P[cur].name}`);
+      place(cpuChoose(cur, "normal"));
+    }
+  }
+  renderClock();
+  if (now - lastAutosave > 10000) autosave();
+}, 250);
+function renderClock(){
+  if (!G || !gm) return;
+  $("#moveNo").textContent = `Move ${moveNo} · ${clock(gm.elapsed)}`;
+  setTurnNote();
+}
+function setTurnNote(){
+  const q = P[cur];
+  const timed = gm.turnLimit && !q.cpu && !busy && !over;
+  const secs = Math.ceil(gm.turnLeft / 1000);
+  $("#turnNote").textContent =
+    over ? "winner" :
+    busy ? (chainLen > 1 ? `chain ×${chainLen}` : "reacting") :
+    q.cpu ? "thinking" :
+    timed ? `your move · ${secs}s` : "your move";
+  $("#turnChip").classList.toggle("urgent", !!timed && secs <= 5);
 }
 
 /* ---------- HUD ---------- */
@@ -947,13 +1534,11 @@ function updateUI(){
   const q = P[cur];
   $("#game").style.setProperty("--pc", q.color);
   $("#turnName").textContent = q.name;
-  $("#turnNote").textContent =
-    over ? "winner" :
-    busy ? (chainLen > 1 ? `chain ×${chainLen}` : "reacting") :
-    q.cpu ? "thinking" : "your move";
-  $("#moveNo").textContent = `Move ${moveNo}`;
+  renderClock();
   $("#undoBtn").disabled = busy || !history.length;
+  $("#redoBtn").disabled = busy || !redo.length;
   $("#winUndoBtn").disabled = !history.length;
+  $("#hintBtn").disabled = busy || over || q.cpu;
   const t = tally(S, P.length);
   $("#rail").innerHTML = P.map((p, k) =>
     `<div class="chip${k === cur && !over ? " is-turn" : ""}${p.out ? " is-out" : ""}" style="--c:${p.color}">` +
@@ -1101,6 +1686,16 @@ function drawBoard(V, B, now){
       ctx.strokeRect((B.flash.i % Gx.cols) * c + 2, ((B.flash.i / Gx.cols) | 0) * c + 2, c - 3, c - 3);
     }
   }
+  if (B.hint) {
+    const k = (now - B.hint.t) / 3000;
+    if (k >= 1) hint = null;
+    else {
+      const [hx, hy] = center(V, Gx, B.hint.i);
+      ctx.strokeStyle = `rgba(56,217,122,${0.9 - k * 0.6})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(hx, hy, c * (0.36 + 0.06 * Math.sin(now * 0.012)), 0, Math.PI * 2); ctx.stroke();
+    }
+  }
 
   const A = B.anim;
   for (let i = 0; i < Gx.n; i++) {
@@ -1143,11 +1738,11 @@ function drawBoard(V, B, now){
 function frame(now){
   if (G && screen === "game" && mainView.cell) {
     const colors = P.map(q => q.color);
-    drawBoard(mainView, { G, count:S.count, owner:S.owner, colors, mover:colors[anim ? anim.p : cur], anim, flash, lastMove:over ? -1 : lastMove }, now);
+    drawBoard(mainView, { G, count:S.count, owner:S.owner, colors, mover:colors[anim ? anim.p : cur], anim, flash, hint, lastMove:over ? -1 : lastMove }, now);
   }
   if (!$("#customOv").hidden && prevView.cell) {
     const colors = previewColors();
-    drawBoard(prevView, { G:PG, count:PS.count, owner:PS.owner, colors, mover:colors[0], anim:null, flash:null, lastMove:7 }, now);
+    drawBoard(prevView, { G:PG, count:PS.count, owner:PS.owner, colors, mover:colors[0], anim:null, flash:null, hint:null, lastMove:7 }, now);
   }
   requestAnimationFrame(frame);
 }
@@ -1161,26 +1756,463 @@ $("#board").addEventListener("click", e => {
   place(row * G.cols + col);
 });
 
-/* ---------- buttons ---------- */
-$("#undoBtn").addEventListener("click", undo);
-$("#winUndoBtn").addEventListener("click", undo);
-$("#soundBtn").addEventListener("click", () => { look.sound = !look.sound; if (look.sound) ensureAudio(); applyLook(); });
-$("#menuBtn").addEventListener("click", () => { clearTimeout(cpuTimer); $("#menuOv").hidden = false; $("#resumeBtn").focus(); });
-$("#resumeBtn").addEventListener("click", () => { $("#menuOv").hidden = true; maybeCpu(); });
-$("#restartBtn").addEventListener("click", () => { $("#menuOv").hidden = true; newGame(); });
-$("#againBtn").addEventListener("click", newGame);
-function toSetup(){
+/* ---------- game buttons and menu ---------- */
+function openMenu(){
+  if (!G || over) return;
+  clearTimeout(cpuTimer);
+  $("#menuInfo").textContent = `Saved automatically ${ago(Date.now() - (performance.now() - lastAutosave))}. ${gm.mode === "campaign" ? "Campaign level " + gm.level + "." : ""}`.trim();
+  $("#menuOv").hidden = false;
+  $("#resumeBtn").focus();
+}
+function closeMenu(){ $("#menuOv").hidden = true; maybeCpu(); }
+function goHome(){
+  autosave();
   gameId++; clearTimeout(cpuTimer); busy = false; anim = null;
   $("#menuOv").hidden = true; $("#winOv").hidden = true;
-  renderSetup(); showScreen("setup");
+  disarmBack();
+  showScreen("setup");
 }
-$("#leaveBtn").addEventListener("click", toSetup);
-$("#winSetupBtn").addEventListener("click", toSetup);
+$("#undoBtn").addEventListener("click", undo);
+$("#redoBtn").addEventListener("click", redoMove);
+$("#winUndoBtn").addEventListener("click", undo);
+$("#menuBtn").addEventListener("click", openMenu);
+$("#resumeBtn").addEventListener("click", closeMenu);
+$("#saveCopyBtn").addEventListener("click", saveCopyFromGame);
+$("#hintBtn").addEventListener("click", () => {
+  if (busy || over || P[cur].cpu) return;
+  hint = { i:cpuChoose(cur, "normal"), t:performance.now() };
+  gm.hints++;
+  closeMenu();
+  toast("Try the cell with the green ring");
+});
+$("#menuSoundBtn").addEventListener("click", () => { look.sound = !look.sound; if (look.sound) ensureAudio(); applyLook(); });
+$("#fullBtn").addEventListener("click", async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch (e) { toast("Full screen is not available here"); }
+});
+$("#restartBtn").addEventListener("click", async () => {
+  const v = await ask({ title:"Restart this game?", text:"The current board is cleared and the same players start again.",
+    buttons:[{ label:"Restart", kind:"danger", value:true }, { label:"Cancel", kind:"ghost", value:false }] });
+  if (v) { $("#menuOv").hidden = true; restartSame(); }
+});
+$("#homeBtn").addEventListener("click", goHome);
+$("#quitBtn").addEventListener("click", async () => {
+  const v = await ask({ title:"Quit this game?", text:"It will be removed from this device. Saved copies are not affected.",
+    buttons:[{ label:"Quit game", kind:"danger", value:true }, { label:"Keep playing", kind:"ghost", value:false }] });
+  if (!v) return;
+  clearActive();
+  goHomeAfterQuit();
+  toast("Game quit");
+});
+function goHomeAfterQuit(){
+  gameId++; clearTimeout(cpuTimer); busy = false; anim = null; G = null; gm = null;
+  $("#menuOv").hidden = true; $("#winOv").hidden = true;
+  disarmBack();
+  showScreen("setup");
+}
+$("#againBtn").addEventListener("click", () => {
+  const act = $("#againBtn").dataset.act;
+  if (act === "next") startCampaign(gm.level + 1);
+  else if (act === "retry") startCampaign(gm.level);
+  else if (act === "campaign") { clearActive(); goHomeAfterQuit(); openSheet("campaign"); }
+  else restartSame();
+});
+$("#winHomeBtn").addEventListener("click", () => { clearActive(); goHomeAfterQuit(); });
+
+/* The Android back button opens the menu (or closes the top panel) instead of leaving the game. */
+let backArmed = false;
+function armBack(){ if (!backArmed) { try { history_.pushState({ cr:"game" }, ""); backArmed = true; } catch (e) {} } }
+function disarmBack(){ if (backArmed) { backArmed = false; try { history_.back(); } catch (e) {} } }
+const history_ = window.history;
+window.addEventListener("popstate", () => {
+  if (!backArmed) return;
+  backArmed = false;
+  if (screen !== "game") return;
+  if (!$("#askOv").hidden) closeAsk(null);
+  else if (!$("#sheetOv").hidden) closeSheet();
+  else if (!$("#customOv").hidden) closeCustomize();
+  else if (!$("#menuOv").hidden) closeMenu();
+  else if (!over) openMenu();
+  armBack();
+});
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return;
-  if (!$("#customOv").hidden) closeCustomize();
-  else if (!$("#menuOv").hidden) $("#resumeBtn").click();
+  if (!$("#askOv").hidden) closeAsk(null);
+  else if (!$("#sheetOv").hidden) closeSheet();
+  else if (!$("#customOv").hidden) closeCustomize();
+  else if (!$("#menuOv").hidden) closeMenu();
 });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") { if (screen === "game") autosave(); }
+  else if (screen === "game") keepAwake(true);
+});
+window.addEventListener("pagehide", () => { if (screen === "game") autosave(); });
+
+/* ---------- sheets: campaign, saved games, stats, achievements, backup ---------- */
+let sheetKind = null;
+const SHEET_TITLES = { campaign:"Campaign", saves:"Saved games", stats:"Stats", achievements:"Achievements", data:"Backup and devices" };
+function openSheet(kind){
+  sheetKind = kind;
+  clearTimeout(cpuTimer);
+  $("#sheetTitle").textContent = SHEET_TITLES[kind];
+  renderSheet();
+  $("#sheetOv").hidden = false;
+  $("#sheetBody").scrollTop = 0;
+  $("#sheetDone").focus();
+}
+function closeSheet(){
+  $("#sheetOv").hidden = true; sheetKind = null;
+  if (screen === "setup") renderHome(); else maybeCpu();
+}
+$("#sheetDone").addEventListener("click", closeSheet);
+function renderSheet(){
+  const body = $("#sheetBody");
+  body.innerHTML = ({ campaign:sheetCampaign, saves:sheetSaves, stats:sheetStats, achievements:sheetAchievements, data:sheetData })[sheetKind]();
+  if (sheetKind === "data") afterDataRender();
+}
+const dots = players => `<span class="pdots">${players.map(q => `<span class="pdot" style="--c:${q.color || q.c}"></span>`).join("")}</span>`;
+
+function sheetCampaign(){
+  return `<p class="hint">Beat the CPU on bigger boards with more opponents. You play as ${esc((setup.names[0] || "").trim() || "player 1")} in your first player colour. Clear a level to unlock the next.</p>
+  <div class="list">${CAMPAIGN.map((L, n) => {
+    const lv = n + 1, done = campaign.done[lv], open = lv <= campaign.unlocked;
+    return `<div class="level${done ? " done" : ""}${open ? "" : " locked"}">
+      <span class="lv">${lv}</span>
+      <span class="lv-text"><b>${L.cols}×${L.rows} board</b><small>Against ${plural(L.cpus, LEVEL_NAMES[L.lvl] + " CPU")}${done ? " · cleared " + ago(done) : ""}</small></span>
+      ${open ? `<button type="button" class="btn mini${done ? "" : " primary"}" data-act="camp" data-level="${lv}">${done ? "Replay" : "Play"}</button>` : `<span class="muted">Locked</span>`}
+    </div>`;
+  }).join("")}</div>`;
+}
+function sheetSaves(){
+  const act = readActive();
+  const top = screen === "game" && G && !over
+    ? `<button type="button" class="btn primary" data-act="save-current">Save a copy of this game</button>`
+    : act && !act.over ? `<button type="button" class="btn" data-act="save-active">Save a copy of the game in progress</button>` : "";
+  const list = saves.length ? `<div class="list">${saves.map(s => {
+    const g = s.game;
+    return `<div class="item">
+      <div class="item-head"><b>${esc(s.name)}</b>${dots(g.P)}</div>
+      <div class="item-meta">${g.cols}×${g.rows} · move ${g.moveNo} · ${plural(g.P.length, "player")}${g.over ? " · finished" : ""}<br>Saved ${ago(s.at)} on ${esc(s.device || "unknown device")}</div>
+      <div class="item-actions">
+        <button type="button" class="btn mini primary" data-act="load" data-id="${s.id}">Load</button>
+        <button type="button" class="btn mini" data-act="rename" data-id="${s.id}">Rename</button>
+        <button type="button" class="btn mini danger" data-act="delete" data-id="${s.id}">Delete</button>
+      </div></div>`;
+  }).join("")}</div>`
+    : `<div class="empty">No saved games yet. Your current game always saves itself. Use <b>Save a copy</b> in the game menu to keep a snapshot you can come back to.</div>`;
+  return `${top}<p class="hint">${saves.length} of ${MAX_SAVES} slots used. Saved games live on this device and are included in backups.</p>${list}`;
+}
+function sheetStats(){
+  if (!results.length) return `<div class="empty">Finish a game to start your stats.</div>`;
+  const secs = results.reduce((a, r) => a + (r.dur || 0), 0);
+  const moves = results.reduce((a, r) => a + (r.moves || 0), 0);
+  const longest = results.reduce((a, r) => Math.max(a, r.chain || 0), 0);
+  const marathon = results.reduce((a, r) => Math.max(a, r.moves || 0), 0);
+  const humanWins = results.filter(r => r.p[r.w] && !r.p[r.w].cpu).length;
+  const byName = {};
+  for (const r of results) {
+    const q = r.p[r.w]; if (!q) continue;
+    const key = q.n + (q.cpu ? " (CPU)" : "");
+    byName[key] = byName[key] || { n:key, c:q.c, wins:0 };
+    byName[key].wins++;
+  }
+  const top = Object.values(byName).sort((a, b) => b.wins - a.wins).slice(0, 8);
+  const maxW = top.length ? top[0].wins : 1;
+  const byDev = {};
+  for (const r of results) { const d = r.dev || "Unknown device"; byDev[d] = (byDev[d] || 0) + 1; }
+  const recent = results.slice(-15).reverse();
+  return `
+  <div class="stat-grid">
+    <div class="stat"><b>${results.length}</b><span>games finished</span></div>
+    <div class="stat"><b>${duration(secs)}</b><span>time played</span></div>
+    <div class="stat"><b>${humanWins}</b><span>won by people</span></div>
+    <div class="stat"><b>${results.length - humanWins}</b><span>won by the CPU</span></div>
+    <div class="stat"><b>${longest}</b><span>longest chain</span></div>
+    <div class="stat"><b>${marathon}</b><span>most moves in a game</span></div>
+  </div>
+  <section class="group"><h2>Wins by player</h2>
+    <div class="list">${top.map(t => `<div class="barrow"><span class="nm"><span class="pdot" style="--c:${t.c}"></span>${esc(t.n)}</span><span class="track"><span class="fill" style="--c:${t.c};width:${Math.max(4, t.wins / maxW * 100)}%;display:block"></span></span><span class="num">${t.wins}</span></div>`).join("")}</div>
+  </section>
+  <section class="group"><h2>Games by device</h2>
+    <div class="list">${Object.entries(byDev).map(([d, n]) => `<div class="kv"><span>${esc(d)}${d === device.name ? " (this device)" : ""}</span><span class="num">${n}</span></div>`).join("")}</div>
+  </section>
+  <section class="group"><h2>Recent games</h2>
+    <div class="list">${recent.map(r => {
+      const q = r.p[r.w] || { n:"?", c:"#888888" };
+      return `<div class="item"><div class="item-head"><b><span class="pdot" style="--c:${q.c};display:inline-block;vertical-align:-1px;margin-right:6px"></span>${esc(q.n)} won</b><span class="muted">${ago(r.at)}</span></div>
+        <div class="item-meta">${r.cols}×${r.rows} · ${r.moves} moves · ${duration(r.dur || 0)} · ${plural(r.p.length, "player")}${r.mode === "campaign" ? " · campaign " + r.level : ""} · ${esc(r.dev || "")}</div></div>`;
+    }).join("")}</div>
+  </section>
+  <p class="hint">Stats cover the last ${MAX_RESULTS} finished games and are included in backups.</p>`;
+}
+function sheetAchievements(){
+  const got = ACHIEVEMENTS.filter(a => achievements[a.id]).length;
+  return `<p class="hint">${got} of ${ACHIEVEMENTS.length} unlocked.</p><div class="list">${ACHIEVEMENTS.map((a, n) => {
+    const at = achievements[a.id];
+    return `<div class="ach${at ? "" : " locked"}"><span class="badge">${at ? "★" : n + 1}</span>
+      <span class="ach-text"><b class="ach-name">${esc(a.name)}</b><small>${esc(a.desc)}${at ? " · " + ago(at) : ""}</small></span></div>`;
+  }).join("")}</div>`;
+}
+function sheetData(){
+  const kb = Math.max(1, Math.round(store.bytes() / 1024));
+  const points = store.get(K.points, []) || [];
+  const canShareFiles = !!(navigator.canShare && window.File && (() => { try { return navigator.canShare({ files:[new File(["x"], "x.json", { type:"application/json" })] }); } catch (e) { return false; } })());
+  return `
+  <section class="group"><h2>This device</h2>
+    <div class="field"><label class="field-label" for="devName">Device name</label>
+      <input id="devName" class="text-input" maxlength="30" value="${esc(device.name)}"></div>
+    <p class="hint">The name is stored with your saves, finished games and backups, so you can tell devices apart. Device ID ${esc(device.id.slice(-6))}.</p>
+    <div class="kv"><span>Game data on this device</span><span class="num">${kb} KB</span></div>
+    <div class="kv"><span>Protected from automatic cleanup</span><span id="persistState">checking</span></div>
+    <button type="button" class="btn" data-act="persist" id="persistBtn" hidden>Protect my saves</button>
+  </section>
+  <section class="group"><h2>Back up</h2>
+    <p class="hint">A backup holds your game in progress, saved games, stats, achievements, campaign progress, players and look. Last backup from this device: ${meta.lastBackup ? ago(meta.lastBackup) : "never"}.</p>
+    <button type="button" class="btn primary" data-act="download">Download backup file</button>
+    ${canShareFiles ? `<button type="button" class="btn" data-act="share">Share backup (Drive, WhatsApp, email)</button>` : ""}
+    <button type="button" class="btn" data-act="copy">Copy backup code</button>
+    <textarea id="codeOut" class="text-input" readonly hidden aria-label="Backup code"></textarea>
+  </section>
+  <section class="group"><h2>Restore</h2>
+    <p class="hint">Bring in a backup from this or another device. You choose whether to merge it with what is here or replace everything.</p>
+    <button type="button" class="btn" data-act="pick-file">Restore from a backup file</button>
+    <label class="sr" for="codeIn">Paste a backup code</label>
+    <textarea id="codeIn" class="text-input" placeholder="Or paste a backup code here"></textarea>
+    <button type="button" class="btn" data-act="restore-code">Restore from code</button>
+  </section>
+  <section class="group"><h2>Restore points</h2>
+    <p class="hint">The game keeps up to ${MAX_POINTS} automatic restore points on this device: one a day, and one before every restore or erase.</p>
+    ${points.length ? `<div class="list">${points.map((pt, n) => `<div class="item"><div class="item-head"><b>${esc(pt.reason)}</b><span class="muted">${ago(pt.at)}</span></div>
+      <div class="item-meta">${summary(pt.data)}</div>
+      <div class="item-actions"><button type="button" class="btn mini" data-act="point" data-n="${n}">Restore this point</button></div></div>`).join("")}</div>`
+      : `<div class="empty">No restore points yet.</div>`}
+  </section>
+  <section class="group"><h2>Erase</h2>
+    <button type="button" class="btn danger" data-act="erase">Erase all game data on this device</button>
+  </section>`;
+}
+async function afterDataRender(){
+  const name = $("#devName");
+  name.addEventListener("change", () => {
+    device.name = name.value.trim().slice(0, 30) || guessDeviceName();
+    store.set(K.device, device); toast("Device name saved"); renderHome();
+  });
+  try {
+    const persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false;
+    $("#persistState").textContent = persisted ? "Yes" : "Not yet";
+    $("#persistBtn").hidden = persisted || !(navigator.storage && navigator.storage.persist);
+  } catch (e) { $("#persistState").textContent = "Unknown"; }
+}
+async function askPersist(){ try { if (navigator.storage && navigator.storage.persist && !(await navigator.storage.persisted())) await navigator.storage.persist(); } catch (e) {} }
+
+$("#sheetBody").addEventListener("click", async e => {
+  const b = e.target.closest("[data-act]");
+  if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  if (act === "camp") {
+    const lv = +b.dataset.level;
+    if (screen === "game" && G) autosave();
+    if (!(await clearWayForNewGame())) return;
+    $("#sheetOv").hidden = true; sheetKind = null;
+    ensureAudio(); startCampaign(lv);
+  } else if (act === "save-current") {
+    await saveCopyFromGame(); renderSheet();
+  } else if (act === "save-active") {
+    const a = readActive(); if (a) addSave(a, null); renderSheet();
+  } else if (act === "load") {
+    const s = saves.find(x => x.id === id); if (!s) return;
+    const a = readActive();
+    if (a && !a.over) {
+      const v = await ask({ title:"Load this saved game?", text:"It replaces the game in progress. Keep a copy of that one first?",
+        buttons:[{ label:"Save a copy, then load", kind:"primary", value:"save" }, { label:"Replace it", kind:"danger", value:"replace" }, { label:"Cancel", kind:"ghost", value:null }] });
+      if (!v) return;
+      if (v === "save") addSave(screen === "game" && G ? serializeGame(SAVE_HISTORY) : a, null);
+    }
+    const g = JSON.parse(JSON.stringify(s.game));
+    g.id = rid(); g.resultId = null;
+    $("#sheetOv").hidden = true; sheetKind = null;
+    loadGame(g); autosave(); ensureAudio(); enterGame();
+    toast(`Loaded "${s.name}"`);
+  } else if (act === "rename") {
+    const s = saves.find(x => x.id === id); if (!s) return;
+    const r = await ask({ title:"Rename saved game", input:s.name, buttons:[{ label:"Rename", kind:"primary", value:true }, { label:"Cancel", kind:"ghost", value:false }] });
+    if (r && r.value && r.text) { s.name = r.text.slice(0, 40); store.set(K.saves, saves); renderSheet(); }
+  } else if (act === "delete") {
+    const s = saves.find(x => x.id === id); if (!s) return;
+    const v = await ask({ title:`Delete "${s.name}"?`, text:"This cannot be undone unless you have a backup.", buttons:[{ label:"Delete", kind:"danger", value:true }, { label:"Cancel", kind:"ghost", value:false }] });
+    if (v) { saves = saves.filter(x => x.id !== id); store.set(K.saves, saves); renderSheet(); toast("Saved game deleted"); }
+  } else if (act === "persist") {
+    try {
+      const ok = await navigator.storage.persist();
+      toast(ok ? "Your saves are protected" : "This browser did not allow it. Installing the app usually helps.");
+    } catch (err) { toast("This browser does not support it"); }
+    renderSheet();
+  } else if (act === "download") {
+    downloadBackup();
+  } else if (act === "share") {
+    shareBackup();
+  } else if (act === "copy") {
+    copyBackup();
+  } else if (act === "pick-file") {
+    $("#restoreFile").value = ""; $("#restoreFile").click();
+  } else if (act === "restore-code") {
+    const t = $("#codeIn").value.trim();
+    if (!t) { toast("Paste a backup code first"); return; }
+    restoreFromText(t);
+  } else if (act === "point") {
+    const pts = store.get(K.points, []) || [], pt = pts[+b.dataset.n]; if (!pt) return;
+    const v = await ask({ title:"Restore this point?", text:`Everything on this device goes back to ${when(pt.at)}. ${summary(pt.data)}.`,
+      buttons:[{ label:"Restore", kind:"primary", value:true }, { label:"Cancel", kind:"ghost", value:false }] });
+    if (v) { makeRestorePoint("Before restoring a point"); applyData(pt.data, "replace"); afterRestore("Restore point applied"); }
+  } else if (act === "erase") {
+    const v = await ask({ title:"Erase all game data?", text:"Your game in progress, saved games, stats, achievements and campaign progress are removed from this device. A restore point is kept so you can undo this.",
+      buttons:[{ label:"Erase everything", kind:"danger", value:true }, { label:"Cancel", kind:"ghost", value:false }] });
+    if (v) { makeRestorePoint("Before erasing"); applyData({}, "replace"); afterRestore("All game data erased"); }
+  }
+});
+
+/* ---------- backup and restore ---------- */
+function collectData(){
+  return { setup:{ ...setup }, look:{ ...look }, active:store.get(K.active), saves, results, achievements, campaign };
+}
+function summary(d){
+  if (!d) return "Empty";
+  const parts = [];
+  if (d.active && validGame(d.active)) parts.push(d.active.over ? "a finished game" : "a game in progress");
+  parts.push(plural((d.saves || []).length, "saved game"));
+  parts.push(plural((d.results || []).length, "finished game"));
+  parts.push(plural(Object.keys(d.achievements || {}).length, "achievement"));
+  return parts.join(", ");
+}
+function makeBackup(){
+  if (screen === "game" && G) autosave();
+  return { app:"chain-reaction", format:1, version:APP_VERSION, exportedAt:Date.now(), device:{ id:device.id, name:device.name }, data:collectData() };
+}
+function backupFileName(){
+  const d = new Date(), pad = n => String(n).padStart(2, "0");
+  const dev = device.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "device";
+  return `chain-reaction-${dev}-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+}
+function markBackedUp(){ meta.lastBackup = Date.now(); saveMeta(); unlock("backup"); if (sheetKind === "data") renderSheet(); }
+async function downloadBackup(){
+  // Inside a Claude artifact, files go through the viewer's save prompt; elsewhere a plain download works.
+  const viewer = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads").catch(() => null) : null;
+  if (viewer) {
+    try {
+      await viewer.save({ filename:backupFileName(), data:JSON.stringify(makeBackup()) });
+      markBackedUp();
+      toast("Backup saved");
+    } catch (e) {
+      if (!e || e.code !== "declined") toast("Saving a file did not work here. Use Copy backup code instead.");
+    }
+    return;
+  }
+  const blob = new Blob([JSON.stringify(makeBackup())], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = backupFileName();
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  markBackedUp();
+  toast("Backup download started. If no file appears, use Copy backup code.");
+}
+async function shareBackup(){
+  try {
+    const file = new File([JSON.stringify(makeBackup())], backupFileName(), { type:"application/json" });
+    await navigator.share({ files:[file], title:"Chain Reaction backup", text:`Backup from ${device.name}` });
+    markBackedUp();
+  } catch (e) { if (e && e.name !== "AbortError") toast("Sharing did not work here. Try Download or Copy."); }
+}
+async function copyBackup(){
+  const text = JSON.stringify(makeBackup());
+  const out = $("#codeOut");
+  try { await navigator.clipboard.writeText(text); markBackedUp(); toast("Backup code copied. Paste it somewhere safe."); }
+  catch (e) {
+    out.hidden = false; out.value = text; out.focus(); out.select();
+    markBackedUp();
+    toast("Copy the selected code and keep it somewhere safe");
+  }
+}
+$("#restoreFile").addEventListener("change", () => {
+  const f = $("#restoreFile").files[0];
+  $("#restoreFile").value = "";               // so picking the same file again still fires
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => restoreFromText(String(reader.result || ""));
+  reader.onerror = () => toast("That file could not be read");
+  reader.readAsText(f);
+});
+async function restoreFromText(text){
+  let b;
+  try { b = JSON.parse(text); } catch (e) { toast("That is not a Chain Reaction backup"); return; }
+  if (!b || b.app !== "chain-reaction" || !b.data || typeof b.data !== "object") { toast("That is not a Chain Reaction backup"); return; }
+  const from = b.device && b.device.name ? b.device.name : "another device";
+  const v = await ask({
+    title:`Restore backup from ${from}?`,
+    text:`Made ${b.exportedAt ? when(b.exportedAt) : "at an unknown time"}. Contains ${summary(b.data)}. Merge adds it to what is on this device. Replace swaps everything for the backup. A restore point is made first either way.`,
+    buttons:[{ label:"Merge with this device", kind:"primary", value:"merge" }, { label:"Replace everything", kind:"danger", value:"replace" }, { label:"Cancel", kind:"ghost", value:null }]
+  });
+  if (!v) return;
+  makeRestorePoint(`Before restoring from ${from}`);
+  applyData(b.data, v, from);
+  afterRestore(v === "merge" ? `Merged backup from ${from}` : `Restored backup from ${from}`);
+}
+function applyData(d, mode, from){
+  const cleanSaves = (d.saves || []).filter(s => s && s.id && validGame(s.game));
+  const cleanResults = (d.results || []).filter(r => r && r.id && Array.isArray(r.p));
+  if (mode === "replace") {
+    if (d.setup) { loadSetup(d.setup); } else { Object.assign(setup, { count:4, names:DEFAULT_NAMES.slice(), colors:DEFAULT_COLORS.slice(), cpu:new Array(8).fill(false) }); }
+    Object.assign(look, LOOK_DEFAULTS); if (d.look) loadLook(d.look);
+    saves = cleanSaves; results = cleanResults;
+    achievements = { ...(d.achievements || {}) };
+    campaign = d.campaign && typeof d.campaign === "object" ? { unlocked:Math.max(1, d.campaign.unlocked | 0), done:{ ...(d.campaign.done || {}) } } : { unlocked:1, done:{} };
+    if (d.active && validGame(d.active)) store.set(K.active, d.active); else { store.del(K.active); store.del(K.activePrev); }
+  } else {
+    const ids = new Set(saves.map(s => s.id));
+    for (const s of cleanSaves) if (!ids.has(s.id)) saves.push(s);
+    if (d.active && validGame(d.active) && !d.active.over) {
+      const mine = readActive();
+      if (!mine) store.set(K.active, d.active);
+      else if (mine.id !== d.active.id) saves.unshift({ id:rid(), name:`Game in progress from ${from || "backup"}`.slice(0, 40), at:Date.now(), device:from || "backup", game:d.active });
+    }
+    saves.sort((a, b) => b.at - a.at);
+    if (saves.length > MAX_SAVES) saves.length = MAX_SAVES;
+    const rids = new Set(results.map(r => r.id));
+    for (const r of cleanResults) if (!rids.has(r.id)) results.push(r);
+    results.sort((a, b) => a.at - b.at);
+    if (results.length > MAX_RESULTS) results.splice(0, results.length - MAX_RESULTS);
+    for (const [id, at] of Object.entries(d.achievements || {})) if (!achievements[id] || at < achievements[id]) achievements[id] = at;
+    if (d.campaign) {
+      campaign.unlocked = Math.max(campaign.unlocked, d.campaign.unlocked | 0);
+      for (const [lv, at] of Object.entries(d.campaign.done || {})) if (!campaign.done[lv] || at < campaign.done[lv]) campaign.done[lv] = at;
+    }
+  }
+  saveSetup(); saveLook();
+  store.set(K.saves, saves); store.set(K.results, results); store.set(K.ach, achievements); store.set(K.camp, campaign);
+}
+function afterRestore(msg){
+  if (screen === "game") {
+    gameId++; clearTimeout(cpuTimer); busy = false; anim = null; G = null; gm = null;
+    $("#menuOv").hidden = true; $("#winOv").hidden = true; disarmBack();
+    showScreen("setup");
+  }
+  renderSetup(); syncCustomize(); syncSound(); renderHome();
+  if (sheetKind) renderSheet();
+  toast(msg);
+}
+function makeRestorePoint(reason){
+  const pts = store.get(K.points, []) || [];
+  pts.unshift({ at:Date.now(), reason, data:collectData() });
+  while (pts.length > MAX_POINTS) pts.pop();
+  while (pts.length && !store.set(K.points, pts, true)) pts.pop();   // drop the oldest if storage is tight
+}
+function dailyRestorePoint(){
+  const today = new Date().toDateString();
+  if (meta.lastPointDay === today || !hasData()) return;
+  makeRestorePoint("Daily restore point");
+  meta.lastPointDay = today; saveMeta();
+}
 
 /* ---------- install as an app (only on the hosted site) ---------- */
 let installPrompt = null;
@@ -1196,43 +2228,22 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
-/* ---------- keep an in-progress game when the page is updated live ---------- */
-function snapshot(){
-  return {
-    setup, look, screen,
-    game: G ? { rows:G.rows, cols:G.cols, count:Array.from(S.count), owner:Array.from(S.owner), P, cur, moveNo, lastMove, over } : null
-  };
-}
-try { window.claude?.hot?.snapshot?.(snapshot); } catch (e) {}
-
-function restoreGame(g){
-  try {
-    G = makeGeom(g.rows, g.cols);
-    S = { count:Uint8Array.from(g.count), owner:Int8Array.from(g.owner) };
-    P = g.P.map(q => ({ ...q }));
-    cur = g.cur; moveNo = g.moveNo; lastMove = g.lastMove; over = !!g.over;
-    history = []; busy = false; anim = null; gameId++;
-    showScreen("game");
-    updateUI();
-    if (over) checkWin();
-    else if (unstable(G, S).length) resolve(cur, gameId);
-    else maybeCpu();
-  } catch (e) { G = null; showScreen("setup"); }
-}
+/* ---------- start up ---------- */
+try { window.claude?.hot?.snapshot?.(() => ({ active:G && gm ? serializeGame(AUTOSAVE_HISTORY) : null, screen })); } catch (e) {}
 
 function boot(data){
-  const savedSetup = store.get(SETUP_KEY), savedLook = store.get(LOOK_KEY);
-  loadSetup(savedSetup);
-  loadLook(savedLook);
-  // Older versions kept the sound switch with the players.
-  if (!savedLook && savedSetup && typeof savedSetup.sound === "boolean") look.sound = savedSetup.sound;
-  if (data && data.setup) loadSetup(data.setup);
-  if (data && data.look) loadLook(data.look);
+  loadAll();
+  // A live page update can hand back a game that storage could not keep.
+  if (data && data.active && validGame(data.active) && !readActive()) store.set(K.active, data.active);
+  dailyRestorePoint();
   renderSetup();
   renderSwatches();
   syncCustomize();
   syncSound();
-  if (data && data.game && data.screen === "game") restoreGame(data.game);
+  const act = readActive();
+  const wasPlaying = meta.screen === "game" || (data && data.screen === "game");
+  if (act && wasPlaying) { loadGame(act); enterGame(); }
+  else { screen = "setup"; renderHome(); }
   requestAnimationFrame(frame);
 }
 const hot = window.claude?.hot;

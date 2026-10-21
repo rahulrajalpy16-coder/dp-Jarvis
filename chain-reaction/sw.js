@@ -1,7 +1,7 @@
 // Offline support for Chain Reaction.
 // The page itself is fetched network-first so a new version shows up on the next open;
 // everything else is served from the cache and refreshed in the background.
-const CACHE = "chain-reaction-v3";
+const CACHE = "chain-reaction-v4";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
 
 self.addEventListener("install", e => {
