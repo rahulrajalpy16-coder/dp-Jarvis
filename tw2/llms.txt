@@ -13,6 +13,12 @@
 - Interactive 3D: product demos and walkthroughs that make complex equipment easy to explore (WebGL, WebXR).
 - Apps: installable, offline-ready tools shaped around real workflows.
 
+## Service pages
+- [Website design in the UAE](https://timewalker.tech/services/website-design-uae.html)
+- [AI and workflow automation](https://timewalker.tech/services/ai-automation-uae.html)
+- [Interactive 3D product demos](https://timewalker.tech/services/3d-product-demos.html)
+- [Web app development](https://timewalker.tech/services/app-development-uae.html)
+
 ## Work
 - [PS-120 pump skid, interactive 3D demo](https://timewalker.tech/demo/pump-skid.html): a concept packaged pump set you can orbit, x-ray and pull apart in the browser. Values are illustrative.
 - Chain Reaction: a live strategy game for 2 to 8 players that installs from the browser and works offline.

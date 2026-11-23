@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://timewalker.tech/sitemap.xml
