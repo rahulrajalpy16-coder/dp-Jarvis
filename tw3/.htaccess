@@ -1,0 +1,47 @@
+# timewalker.tech on Hostinger
+DirectoryIndex index.html
+Options -Indexes
+
+# One address for every page: www.timewalker.tech and /index.html
+# send visitors and Google to https://timewalker.tech/ (permanent 301).
+# http to https is already handled by Hostinger.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^www\.timewalker\.tech$ [NC]
+  RewriteRule ^(.*)$ https://timewalker.tech/$1 [R=301,L]
+  RewriteCond %{THE_REQUEST} \s/+index\.html[?\s] [NC]
+  RewriteRule ^index\.html$ https://timewalker.tech/ [R=301,L]
+  RewriteRule ^apps/chain-reaction$ https://timewalker.tech/apps/chain-reaction/ [R=301,L]
+</IfModule>
+
+# file types the site uses
+AddType image/webp .webp
+AddType video/mp4 .mp4
+AddType model/gltf-binary .glb
+AddType application/javascript .js
+AddType application/manifest+json .webmanifest
+AddType image/x-icon .ico
+AddType text/plain .txt
+
+# small safety headers that do not change how the site looks or works
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# images, film frames and the 3D logo rarely change: let browsers keep them
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/x-icon "access plus 30 days"
+  ExpiresByType video/mp4 "access plus 30 days"
+  ExpiresByType model/gltf-binary "access plus 30 days"
+  ExpiresByType application/javascript "access plus 1 hour"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/manifest+json application/xml image/svg+xml
+</IfModule>
