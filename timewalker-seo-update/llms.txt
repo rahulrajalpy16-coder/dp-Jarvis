@@ -1,0 +1,24 @@
+# Rahul Raj
+
+> Rahul Raj is a marine engineer turned technical salesperson, based in the UAE, who builds websites, AI workflow automation, interactive 3D product demos and apps. Site: https://timewalker.tech
+
+## About
+- Trained as a marine engineer, then moved into technical sales, working between the people who design complicated equipment and the people who buy, fit and run it.
+- Writes the code himself and checks that the engineering is right.
+- Motto: "You imagine it. I make it work."
+
+## Services
+- Website design and development: distinctive, responsive, fast and easy to update.
+- AI and workflow automation: email, documents and approvals connected so repetitive work disappears.
+- Interactive 3D: product demos and walkthroughs that make complex equipment easy to explore (WebGL, WebXR).
+- Apps: installable, offline-ready tools shaped around real workflows.
+
+## Work
+- [PS-120 pump skid, interactive 3D demo](https://timewalker.tech/demo/pump-skid.html): a concept packaged pump set you can orbit, x-ray and pull apart in the browser. Values are illustrative.
+- Chain Reaction: a live strategy game for 2 to 8 players that installs from the browser and works offline.
+- Concepts: enquiry-to-quote AI assistant, sales and operations board, product website (sample data).
+
+## Contact
+- Email: info@timewalker.tech
+- Phone and WhatsApp: +971 56 863 4639
+- Based in: United Arab Emirates

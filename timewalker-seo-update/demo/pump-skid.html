@@ -1,0 +1,612 @@
+<!DOCTYPE html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PS-120 Pump Skid · Interactive 3D Product Demo · Rahul Raj</title>
+<link rel="canonical" href="https://timewalker.tech/demo/pump-skid.html">
+<link rel="icon" href="../favicon.ico" sizes="48x48">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rahul Raj">
+<meta property="og:url" content="https://timewalker.tech/demo/pump-skid.html">
+<meta property="og:title" content="PS-120 Pump Skid · Interactive 3D Product Demo">
+<meta property="og:description" content="Orbit, x-ray and pull apart a packaged pump set in the browser, with every part linked to its specification. A concept demo by Rahul Raj.">
+<meta property="og:image" content="https://timewalker.tech/assets/pump-blueprint.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Interactive 3D demo of the PS-120 pump skid: orbit, x-ray and pull apart a packaged pump set in the browser, with every part linked to its specification. A concept by Rahul Raj.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an engineering datasheet. Live 3D model as the hero, then services, work, process, about, contact on a 12-column sheet with mono spec labels. */
+:root{--paper:#0a0a0a;--sheet:#121212;--ink:#efece6;--ink-2:#9a968f;--rule:#2a2a2a;--accent:#ff3b2f;--accent-ink:#0a0a0a;--signal:#ff3b2f;--grid:#262626;color-scheme:dark;
+        /* page ground, cool grey with a blue bias */
+        /* raised panels */
+          /* text */
+        /* secondary text */
+         /* hairlines */
+       /* cobalt: links, selection, blueprint lines */
+  
+       /* amber: the one highlight in the 3D view */
+  
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  
+}
+
+
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.05}
+h2{font-size:clamp(28px,4vw,40px);font-variation-settings:"wdth" 112;font-weight:700;letter-spacing:-.01em}
+h3{font-size:19px;font-weight:650;font-variation-settings:"wdth" 100;line-height:1.25}
+p{margin:0}
+
+/* header */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:12px}
+.mark{font-family:var(--display);font-weight:800;font-variation-settings:"wdth" 120;font-size:18px;letter-spacing:.01em;color:var(--ink);text-decoration:none}
+.mark span{color:var(--accent)}
+nav ul{display:flex;gap:20px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+nav a{color:var(--ink-2);text-decoration:none;font-size:14px}
+nav a:hover{color:var(--ink)}
+@media (max-width:640px){nav ul{gap:14px} nav li.opt{display:none}}
+
+/* hero */
+.hero{padding-block:40px 24px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px;align-items:center}
+@media (max-width:900px){.hero-grid{grid-template-columns:1fr}}
+.hero h1{font-size:clamp(38px,4.9vw,60px);font-weight:800;font-variation-settings:"wdth" 108;letter-spacing:-.02em;margin-top:14px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.lede{font-size:18px;color:var(--ink-2);max-width:34em;margin-top:18px}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 15px/1 var(--body);padding:13px 18px;border-radius:4px;border:1px solid var(--ink);color:var(--ink);background:transparent;text-decoration:none;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent);color:var(--accent-ink)}
+
+/* 3D viewer */
+.viewer{position:relative;background:var(--sheet);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.viewer-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.viewer-head .label b{color:var(--ink);font-weight:500}
+.modes{display:flex;gap:4px;flex-wrap:wrap}
+.modes button{font:500 12px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;padding:7px 9px;border-radius:3px;border:1px solid var(--rule);background:transparent;color:var(--ink-2);cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.stage{position:relative;height:440px;touch-action:none}
+@media (max-width:640px){.stage{height:340px}}
+.stage canvas{display:block;width:100%;height:100%;cursor:grab}
+.stage .hint{position:absolute;left:14px;bottom:12px;font:12px/1.4 var(--mono);color:var(--ink-2);pointer-events:none}
+.stage .fail{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--ink-2)}
+.parts{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--rule)}
+.parts button{font:500 13px/1 var(--body);padding:8px 10px;border-radius:3px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer}
+.parts button[aria-pressed="true"]{border-color:var(--signal);box-shadow:inset 0 0 0 1px var(--signal)}
+.inspector{border-top:1px solid var(--rule);padding:14px;min-height:118px}
+.inspector h3{font-size:17px}
+.inspector p{color:var(--ink-2);font-size:14px;margin-top:4px}
+.spec{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 16px;margin:10px 0 0;padding:0}
+.spec div{min-width:0}
+.spec dt{font:11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.spec dd{margin:2px 0 0;font:500 14px/1.3 var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* sections */
+section.block{padding-block:72px;border-top:1px solid var(--rule)}
+.sec-head{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:24px;align-items:end;margin-bottom:36px}
+.sec-head p{color:var(--ink-2);max-width:40em}
+@media (max-width:800px){.sec-head{grid-template-columns:1fr}}
+
+.services{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--ink)}
+@media (max-width:720px){.services{grid-template-columns:1fr}}
+.svc{padding:24px 24px 28px 0;border-bottom:1px solid var(--rule);display:grid;gap:10px;align-content:start}
+.services .svc:nth-child(odd){border-right:1px solid var(--rule)}
+.services .svc:nth-child(even){padding-left:24px}
+@media (max-width:720px){.services .svc:nth-child(odd){border-right:0}.services .svc:nth-child(even){padding-left:0}}
+.svc p{color:var(--ink-2)}
+.svc ul{margin:4px 0 0;padding-left:18px;color:var(--ink);font-size:15px}
+.svc .deliv{font:12px/1.5 var(--mono);color:var(--ink-2)}
+
+.work{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:900px){.work{grid-template-columns:1fr}}
+.case{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:20px;display:grid;gap:10px;align-content:start}
+.case .status{font:11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 7px;border-radius:2px;justify-self:start;border:1px solid var(--rule);color:var(--ink-2)}
+.case .status.live{border-color:var(--accent);color:var(--accent)}
+.case p{color:var(--ink-2);font-size:15px}
+.case .stack{font:12px/1.5 var(--mono);color:var(--ink-2)}
+
+/* assistant */
+.assist{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:24px;margin-top:20px;background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:20px}
+@media (max-width:900px){.assist{grid-template-columns:1fr}}
+.assist .note{font-size:13px;color:var(--ink-2);margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.chips button{font:13px/1.2 var(--body);padding:7px 10px;border-radius:14px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer}
+.chips button:hover{border-color:var(--accent)}
+.chat{display:grid;gap:10px;align-content:start;min-width:0}
+.log{display:grid;gap:10px;max-height:300px;overflow-y:auto;padding-right:4px}
+.msg{padding:10px 12px;border-radius:6px;font-size:15px;max-width:92%}
+.msg.q{justify-self:end;background:var(--ink);color:var(--paper)}
+.msg.a{justify-self:start;border:1px solid var(--rule)}
+.msg.a .src{display:block;font:11px/1.4 var(--mono);color:var(--ink-2);margin-top:6px;letter-spacing:.04em}
+.ask{display:flex;gap:8px}
+.ask input{flex:1;min-width:0;font:15px var(--body);padding:11px 12px;border-radius:4px;border:1px solid var(--rule);background:var(--paper);color:var(--ink)}
+
+/* process */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;counter-reset:s;list-style:none;margin:0;padding:0}
+@media (max-width:900px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.steps{grid-template-columns:1fr}}
+.steps li{padding:18px 20px 22px 0;border-top:2px solid var(--ink);display:grid;gap:8px;align-content:start}
+.steps li::before{counter-increment:s;content:"Step " counter(s);font:12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.steps p{color:var(--ink-2);font-size:15px}
+.steps .when{font:12px/1.4 var(--mono);color:var(--ink)}
+
+/* about + contact */
+.about{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px}
+@media (max-width:800px){.about{grid-template-columns:1fr}}
+.about .body{display:grid;gap:14px;max-width:38em}
+.about .body p{font-size:17px}
+.facts{display:grid;gap:0;margin:0;border-top:1px solid var(--rule)}
+.facts div{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.facts dt{font:12px/1.5 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.facts dd{margin:0}
+.contact{background:var(--ink);color:var(--paper);border-radius:6px;padding:clamp(24px,5vw,48px);display:grid;gap:18px}
+.contact h2{color:var(--paper)}
+.contact p{color:color-mix(in srgb,var(--paper) 78%,var(--ink));max-width:36em}
+.email-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.email{font:500 clamp(18px,3vw,26px)/1.2 var(--mono);user-select:all;word-break:break-all}
+.contact .btn{border-color:var(--paper);color:var(--paper)}
+.contact .btn:hover{background:var(--paper);color:var(--ink)}
+footer{padding-block:28px 40px;color:var(--ink-2);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header.top .label{display:none}@media(min-width:720px){header.top .label{display:block}}
+.mark{color:var(--ink)!important;text-decoration:none}
+.btn.primary{background:var(--accent)!important;color:#0a0a0a!important;border-color:var(--accent)!important}
+</style>
+</head><body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="../#work">&larr; Rahul Raj / Portfolio</a>
+    <span class="label">Working prototype &middot; concept product &middot; illustrative values</span>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="label">P.01 &middot; Interactive 3D &middot; Working prototype</div>
+        <h1>PS-120 pump skid, <em>explained in one click.</em></h1>
+        <p class="lede">A packaged pump set you can orbit, x-ray and pull apart. Click any part to read its specification. The product is a concept I modelled for this portfolio from a typical general arrangement, so every value is illustrative. A client version would use your own CAD and datasheets.</p>
+        <div class="cta-row"><a class="btn primary" href="../#contact">Discuss a demo like this</a><a class="btn" href="#assistant">Ask the datasheet</a></div>
+      </div>
+
+      <div class="viewer" aria-label="Interactive 3D demo of a pump skid">
+        <div class="viewer-head">
+          <div class="label">Live demo · <b>PS-120 pump skid</b></div>
+          <div class="modes" role="group" aria-label="View mode">
+            <button type="button" id="m-real" data-mode="real" aria-pressed="true">Solid</button>
+            <button type="button" id="m-blue" data-mode="blue" aria-pressed="false">Blueprint</button>
+            <button type="button" id="m-xray" data-mode="xray" aria-pressed="false">X-ray</button>
+            <button type="button" id="m-expl" data-mode="expl" aria-pressed="false">Exploded</button>
+          </div>
+        </div>
+        <div class="stage" id="stage">
+          <div class="hint" id="hint">Drag to orbit · scroll or pinch to zoom · click a part</div>
+        </div>
+        <div class="parts" id="parts" role="group" aria-label="Components"></div>
+        <div class="inspector" id="inspector" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="assist-sec"><div class="wrap"><div class="assist" id="assistant">
+        <div>
+          <div class="label">Spec sheet assistant</div>
+          <h3 style="margin-top:8px">Ask the PS-120 datasheet</h3>
+          <div class="chips" id="chips"></div>
+          <p class="note">This portfolio demo answers from a small local index of the PS-120 datasheet, so it works offline and only answers what the datasheet says. Client builds connect a language model to your own documents and keep the citations.</p>
+        </div>
+        <div class="chat">
+          <div class="log" id="log" aria-live="polite"></div>
+          <form class="ask" id="ask">
+            <label for="q" class="label" style="position:absolute;left:-9999px">Your question</label>
+            <input id="q" name="q" type="text" autocomplete="off" placeholder="For example: what is the flow rate?">
+            <button class="btn primary" type="submit">Ask</button>
+          </form>
+        </div>
+      </div>
+    </div></section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Rahul Raj</span>
+    <span>The PS-120 is a representative concept made for this portfolio. It is not a real product and its values are illustrative.</span>
+  </div>
+</footer>
+
+<script>
+/* ---------- Shared component data (also feeds the assistant) ---------- */
+window.PS120 = {
+  motor:{name:"Electric motor",blurb:"Totally enclosed, fan cooled induction motor driving the pump through a flexible coupling.",
+    spec:[["Rated power","22 kW"],["Speed","1,480 rpm (4-pole)"],["Supply","400 V · 3-ph · 50 Hz"],["Efficiency class","IE3"],["Enclosure","IP55"],["Frame","IEC 180L"]]},
+  coupling:{name:"Coupling and guard",blurb:"Flexible jaw coupling that takes up small misalignment, under a fixed guard.",
+    spec:[["Type","Flexible jaw"],["Guard","Fixed, bolted"],["Guard standard","EN ISO 14120"],["Alignment","Laser, ≤ 0.05 mm"]]},
+  pump:{name:"Centrifugal pump",blurb:"End-suction, back pull-out pump: the bearing bracket and impeller come out from the back while the casing and pipework stay in place.",
+    spec:[["Duty flow","120 m³/h"],["Duty head","45 m"],["Efficiency at duty","78 %"],["NPSH required","3.2 m"],["Casing","Ductile iron"],["Impeller","Bronze, closed"]]},
+  suction:{name:"Suction line",blurb:"Straight suction run with an isolating butterfly valve so the pump can be serviced.",
+    spec:[["Size","DN150"],["Rating","PN16"],["Valve","Butterfly, lever"],["Straight run","≥ 5 × DN"]]},
+  discharge:{name:"Discharge line",blurb:"Discharge with a non-return valve to stop backflow and a gauge for the operator.",
+    spec:[["Size","DN100"],["Rating","PN16"],["Non-return valve","Dual plate"],["Gauge","0 to 10 bar, 100 mm"]]},
+  panel:{name:"Control panel",blurb:"Variable speed drive and controls on a skid-mounted stand, with a touch screen for local operation.",
+    spec:[["Drive","VSD, 22 kW"],["Control","Constant pressure"],["Comms","Modbus TCP"],["Enclosure","IP54"],["Screen","7 in touch"]]},
+  skid:{name:"Skid frame",blurb:"Hot-dip galvanised base frame with drip tray and four lifting lugs, delivered as one unit.",
+    spec:[["Footprint","2.6 × 1.1 m"],["Material","S275 steel, galvanised"],["Lifting","4 lugs"],["Dry weight","1,000 kg"]]}
+};
+</script>
+
+<script>
+/* ---------- Spec sheet assistant (local retrieval, no network) ---------- */
+(function(){
+  const kb = [
+    {q:["flow","rate","capacity","m3","m³","how much water","volume"],a:"The PS-120 is rated for 120 m³/h at a head of 45 m.",src:"Pump · duty point"},
+    {q:["head","pressure","lift","how high"],a:"Duty head is 45 m, which is about 4.4 bar at the pump. The discharge gauge reads 0 to 10 bar.",src:"Pump · duty point; Discharge line · gauge"},
+    {q:["power","kw","motor","rating","horsepower","hp"],a:"The motor is 22 kW, 4-pole, running at 1,480 rpm on 400 V, 3-phase, 50 Hz.",src:"Electric motor"},
+    {q:["efficiency","ie3","energy","consumption"],a:"The motor is efficiency class IE3 and the pump runs at 78 % efficiency at its duty point. The variable speed drive saves energy at part load.",src:"Electric motor; Pump"},
+    {q:["speed","rpm","vsd","drive","inverter","vfd","control"],a:"A 22 kW variable speed drive in the control panel keeps the discharge pressure constant. Nominal motor speed is 1,480 rpm.",src:"Control panel; Electric motor"},
+    {q:["npsh","cavitation","suction head"],a:"NPSH required is 3.2 m at the duty point. Keep at least 5 pipe diameters of straight suction run in front of the pump.",src:"Pump; Suction line"},
+    {q:["size","dn","pipe","flange","connection","connections"],a:"Suction is DN150 and discharge is DN100, both PN16 flanged.",src:"Suction line; Discharge line"},
+    {q:["weight","heavy","kg","lift","lifting","crane"],a:"Dry weight is about 1,000 kg. The skid has four lifting lugs and is delivered as one unit.",src:"Skid frame"},
+    {q:["footprint","dimension","dimensions","space","length","width"],a:"The skid footprint is 2.6 × 1.1 m.",src:"Skid frame"},
+    {q:["ip","enclosure","protection","outdoor","dust","water ingress"],a:"The motor is IP55 and the control panel is IP54.",src:"Electric motor; Control panel"},
+    {q:["material","casing","impeller","bronze","iron","galvanised","steel"],a:"Ductile iron casing with a closed bronze impeller, on a hot-dip galvanised S275 steel frame.",src:"Pump; Skid frame"},
+    {q:["modbus","bms","scada","communication","comms","network","remote"],a:"The control panel talks Modbus TCP, so it connects to most building management and SCADA systems.",src:"Control panel"},
+    {q:["valve","valves","isolate","isolation","non-return","check","backflow"],a:"There is a butterfly isolating valve on the suction and a dual plate non-return valve on the discharge.",src:"Suction line; Discharge line"},
+    {q:["maintenance","service","remove","back pull-out","impeller removal"],a:"The pump is back pull-out: once it is isolated, the bearing bracket and impeller come out from the back while the casing and pipework stay in place.",src:"Pump; Suction line"},
+    {q:["coupling","alignment","guard","misalignment"],a:"A flexible jaw coupling under a fixed guard to EN ISO 14120. Align with a laser to within 0.05 mm.",src:"Coupling and guard"}
+  ];
+  const starters = ["What is the flow rate?","How heavy is it?","Can it connect to our BMS?","How do I service the pump?","What pipe sizes?"];
+  const log = document.getElementById('log'), form = document.getElementById('ask'), input = document.getElementById('q'), chips = document.getElementById('chips');
+  function add(cls, text, src){
+    const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = text;
+    if(src){ const s = document.createElement('span'); s.className = 'src'; s.textContent = 'Source: ' + src; d.appendChild(s); }
+    log.appendChild(d); log.scrollTop = log.scrollHeight;
+  }
+  function answer(text){
+    const t = ' ' + text.toLowerCase().replace(/[?.,!]/g,' ') + ' ';
+    let best = null, score = 0;
+    kb.forEach(e => { let s = 0; e.q.forEach(k => { if(t.includes(' ' + k + ' ') || (k.length > 4 && t.includes(k))) s += k.length > 3 ? 2 : 1; }); if(s > score){ score = s; best = e; } });
+    if(best) add('a', best.a, best.src);
+    else add('a', "That isn't in the PS-120 datasheet. Try asking about flow, head, power, pipe sizes, weight, materials or controls.");
+  }
+  function ask(text){ if(!text.trim()) return; add('q', text); answer(text); }
+  starters.forEach(s => { const b = document.createElement('button'); b.type = 'button'; b.textContent = s; b.addEventListener('click', () => ask(s)); chips.appendChild(b); });
+  form.addEventListener('submit', e => { e.preventDefault(); ask(input.value); input.value = ''; });
+  add('a', "Hi, I answer questions about the PS-120 pump skid from its datasheet. Pick a question or type your own.");
+
+  const copy = document.getElementById('copy'), email = document.getElementById('email');
+  if(copy) copy.addEventListener('click', () => {
+    const done = () => { copy.textContent = 'Copied'; setTimeout(() => copy.textContent = 'Copy email', 1600); };
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents(email); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copy.textContent = 'Selected, press copy'; };
+    try { navigator.clipboard.writeText(email.textContent.trim()).then(done, fallback); } catch(e){ fallback(); }
+  });
+})();
+</script>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const stage = document.getElementById('stage');
+const partsBar = document.getElementById('parts');
+const inspector = document.getElementById('inspector');
+const DATA = window.PS120;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let visible = true, frames = 0;
+function kick(){ frames = 90; }
+
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'; }
+
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+} catch (e) {
+  stage.insertAdjacentHTML('beforeend', '<div class="fail">This browser could not start 3D graphics. Try a current version of Chrome, Edge or Safari.</div>');
+  throw e;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 50);
+const HOME = { pos: new THREE.Vector3(3.1, 2.0, 3.3), target: new THREE.Vector3(0, 0.45, 0) };
+camera.position.copy(HOME.pos);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.copy(HOME.target);
+controls.enableDamping = true; controls.minDistance = 1.2; controls.maxDistance = 9; controls.maxPolarAngle = Math.PI * 0.49;
+controls.autoRotate = !reduce; controls.autoRotateSpeed = 0.6;
+controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8090a0, 1.6));
+const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 5, 2); scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.7); fill.position.set(-4, 2, -3); scene.add(fill);
+
+let grid;
+function makeGrid(){
+  if (grid) scene.remove(grid);
+  grid = new THREE.GridHelper(8, 32, new THREE.Color(css('--grid')), new THREE.Color(css('--grid')));
+  grid.position.y = -0.001; scene.add(grid);
+}
+makeGrid();
+
+/* ---------- materials ---------- */
+const M = {
+  motor: new THREE.MeshStandardMaterial({ color: 0x4a6782, metalness: 0.3, roughness: 0.55 }),
+  pump: new THREE.MeshStandardMaterial({ color: 0x2f6f73, metalness: 0.3, roughness: 0.5 }),
+  steel: new THREE.MeshStandardMaterial({ color: 0xb4bbc3, metalness: 0.7, roughness: 0.35 }),
+  dark: new THREE.MeshStandardMaterial({ color: 0x2a3138, metalness: 0.4, roughness: 0.6 }),
+  guard: new THREE.MeshStandardMaterial({ color: 0xe0a030, metalness: 0.2, roughness: 0.5, side: THREE.DoubleSide }),
+  red: new THREE.MeshStandardMaterial({ color: 0xb8352a, metalness: 0.2, roughness: 0.5 }),
+  frame: new THREE.MeshStandardMaterial({ color: 0x7d858d, metalness: 0.55, roughness: 0.5 }),
+  panel: new THREE.MeshStandardMaterial({ color: 0xd8dce1, metalness: 0.2, roughness: 0.6 }),
+  screen: new THREE.MeshStandardMaterial({ color: 0x0e2a3a, emissive: 0x2a7fb0, emissiveIntensity: 0.8, roughness: 0.3 }),
+  dial: new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4 })
+};
+
+const H = 0.5; // shaft centre height above ground (m)
+const groups = {};
+function group(key){ const g = new THREE.Group(); g.userData.key = key; groups[key] = g; scene.add(g); return g; }
+function mesh(geo, mat, g, x, y, z, rx = 0, ry = 0, rz = 0){
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); g.add(m); return m;
+}
+const X = Math.PI / 2;
+function cylX(r, len, mat, g, x, y, z, seg = 32){ return mesh(new THREE.CylinderGeometry(r, r, len, seg), mat, g, x, y, z, 0, 0, X); }
+function cylY(r, len, mat, g, x, y, z, seg = 32){ return mesh(new THREE.CylinderGeometry(r, r, len, seg), mat, g, x, y, z); }
+function box(w, h, d, mat, g, x, y, z){ return mesh(new THREE.BoxGeometry(w, h, d), mat, g, x, y, z); }
+
+/* skid frame: two rails, cross members, plate, lifting lugs */
+{
+  const g = group('skid');
+  [-0.48, 0.48].forEach(z => { box(2.6, 0.14, 0.08, M.frame, g, 0, 0.07, z); box(2.6, 0.02, 0.16, M.frame, g, 0, 0.13, z); box(2.6, 0.02, 0.16, M.frame, g, 0, 0.01, z); });
+  [-1.25, -0.6, 0, 0.6, 1.25].forEach(x => box(0.08, 0.12, 0.88, M.frame, g, x, 0.07, 0));
+  box(2.5, 0.012, 0.9, M.dark, g, 0, 0.146, 0);
+  [[-1.2, -0.56], [-1.2, 0.56], [1.2, -0.56], [1.2, 0.56]].forEach(([x, z]) => {
+    const lug = mesh(new THREE.TorusGeometry(0.04, 0.012, 8, 20), M.frame, g, x, 0.14, z); lug.rotation.y = X;
+  });
+}
+/* motor: body with fins, feet, terminal box, fan cowl, shaft */
+{
+  const g = group('motor');
+  cylX(0.22, 0.62, M.motor, g, -0.56, H, 0, 40);
+  for (let i = 0; i < 9; i++) cylX(0.235, 0.018, M.motor, g, -0.82 + i * 0.065, H, 0, 40);
+  cylX(0.205, 0.16, M.dark, g, -0.95, H, 0, 40);
+  cylX(0.12, 0.012, M.steel, g, -1.034, H, 0, 24);
+  box(0.5, 0.16, 0.36, M.motor, g, -0.56, 0.23, 0);
+  box(0.16, 0.12, 0.16, M.motor, g, -0.5, H + 0.27, 0);
+  cylX(0.06, 0.06, M.motor, g, -0.24, H, 0, 24);
+  cylX(0.025, 0.14, M.steel, g, -0.17, H, 0, 16);
+}
+/* coupling: hubs + open guard */
+{
+  const g = group('coupling');
+  cylX(0.065, 0.06, M.steel, g, -0.11, H, 0, 24);
+  cylX(0.065, 0.06, M.steel, g, -0.03, H, 0, 24);
+  cylX(0.055, 0.02, M.dark, g, -0.07, H, 0, 24);
+  mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.26, 28, 1, true, 0, Math.PI), M.guard, g, -0.07, H, 0, 0, 0, X).rotation.x = -X;
+}
+/* pump: bearing bracket, volute casing, foot, suction nozzle */
+{
+  const g = group('pump');
+  cylX(0.03, 0.12, M.steel, g, 0.04, H, 0, 16);
+  cylX(0.1, 0.24, M.pump, g, 0.2, H, 0, 32);
+  cylX(0.13, 0.04, M.pump, g, 0.33, H, 0, 32);
+  cylX(0.3, 0.16, M.pump, g, 0.44, H, 0, 48);
+  const vol = mesh(new THREE.TorusGeometry(0.29, 0.07, 16, 48, Math.PI * 1.6), M.pump, g, 0.44, H, 0, 0, X, 0);
+  vol.rotation.set(0, X, 0.2);
+  box(0.42, 0.2, 0.3, M.pump, g, 0.3, 0.25, 0);
+  cylX(0.1, 0.12, M.pump, g, 0.58, H, 0, 32);
+  cylY(0.075, 0.2, M.pump, g, 0.44, H + 0.38, 0, 28);
+}
+/* suction: pipe, flanges, butterfly valve */
+{
+  const g = group('suction');
+  cylX(0.17, 0.03, M.steel, g, 0.655, H, 0, 32);
+  cylX(0.085, 0.42, M.steel, g, 0.88, H, 0, 28);
+  cylX(0.17, 0.03, M.steel, g, 0.965, H, 0, 32);
+  cylX(0.16, 0.07, M.red, g, 1.015, H, 0, 32);
+  cylY(0.012, 0.18, M.steel, g, 1.015, H + 0.24, 0, 8);
+  box(0.03, 0.02, 0.28, M.red, g, 1.015, H + 0.33, 0.1);
+  cylX(0.17, 0.03, M.steel, g, 1.065, H, 0, 32);
+  cylX(0.085, 0.12, M.steel, g, 1.14, H, 0, 28);
+  cylX(0.17, 0.03, M.steel, g, 1.21, H, 0, 32);
+}
+/* discharge: riser, non-return valve, gauge */
+{
+  const g = group('discharge');
+  const x = 0.44;
+  cylY(0.14, 0.03, M.steel, g, x, H + 0.495, 0, 32);
+  cylY(0.06, 0.24, M.steel, g, x, H + 0.63, 0, 24);
+  cylY(0.14, 0.03, M.steel, g, x, H + 0.765, 0, 32);
+  cylY(0.13, 0.09, M.dark, g, x, H + 0.825, 0, 32);
+  cylY(0.14, 0.03, M.steel, g, x, H + 0.885, 0, 32);
+  cylY(0.06, 0.3, M.steel, g, x, H + 1.05, 0, 24);
+  cylY(0.14, 0.03, M.steel, g, x, H + 1.215, 0, 32);
+  mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.16, 8), M.steel, g, x, H + 1.0, 0.12, X, 0, 0);
+  const dial = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 32), M.dial, g, x, H + 1.0, 0.21, X, 0, 0);
+  cylY(0.062, 0.032, M.dark, g, x, H + 1.0, 0.205).rotation.x = X;
+  dial.renderOrder = 1;
+}
+/* control panel on stand */
+{
+  const g = group('panel');
+  const px = -1.22, pz = -0.2;
+  box(0.06, 0.95, 0.06, M.frame, g, px, 0.62, pz - 0.15);
+  box(0.06, 0.95, 0.06, M.frame, g, px, 0.62, pz + 0.15);
+  const cab = new THREE.Group(); cab.position.set(px + 0.05, 1.2, pz); cab.rotation.y = Math.PI / 4; g.add(cab);
+  box(0.2, 0.56, 0.46, M.panel, cab, 0, 0, 0);
+  box(0.012, 0.16, 0.24, M.screen, cab, 0.104, 0.1, 0);
+  [-0.1, 0, 0.1].forEach((z, i) => { cylX(0.022, 0.03, i === 0 ? M.red : M.dark, cab, 0.11, -0.12, z, 16); });
+}
+
+/* blueprint edges for every mesh */
+const meshes = [];
+Object.values(groups).forEach(g => g.traverse(o => { if (o.isMesh) meshes.push(o); }));
+const lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(css('--accent')), transparent: true, opacity: 0.9 });
+meshes.forEach(m => {
+  m.userData.base = m.material;
+  const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 28), lineMat);
+  e.visible = false; e.raycast = () => {}; m.add(e); m.userData.edges = e;
+});
+const ghostCache = new Map();
+function ghost(mat){
+  if (!ghostCache.has(mat)) { const c = mat.clone(); c.transparent = true; c.opacity = 0.18; c.depthWrite = false; ghostCache.set(mat, c); }
+  return ghostCache.get(mat);
+}
+const hiCache = new Map();
+function hi(mat){
+  if (!hiCache.has(mat)) { const c = mat.clone(); c.emissive = new THREE.Color(css('--signal')); c.emissiveIntensity = 0.45; hiCache.set(mat, c); }
+  return hiCache.get(mat);
+}
+
+/* ---------- state ---------- */
+let mode = 'real', selected = null, explodeT = 0, explodeGoal = 0;
+const OFF = { motor: [-0.45, 0, 0], coupling: [0, 0.45, 0], pump: [0.15, 0, 0], suction: [0.55, 0, 0], discharge: [0.15, 0.45, 0], panel: [-0.35, 0, -0.3], skid: [0, -0.35, 0] };
+
+function applyLook(){
+  const blueprint = mode === 'blue', xray = mode === 'xray';
+  meshes.forEach(m => {
+    let k = m; while (k && !k.userData.key) k = k.parent;
+    const isSel = selected && k && k.userData.key === selected;
+    const base = m.userData.base;
+    m.userData.edges.visible = blueprint || (xray && isSel);
+    if (blueprint) { m.material = ghost(base); m.material.opacity = isSel ? 0.35 : 0.04; }
+    else if (xray) { m.material = isSel ? hi(base) : ghost(base); }
+    else { m.material = isSel ? hi(base) : base; }
+  });
+}
+function setMode(m){
+  if (m === 'expl') { explodeGoal = explodeGoal ? 0 : 1; if (reduce) explodeT = explodeGoal; }
+  else mode = m;
+  document.querySelectorAll('.modes button').forEach(b => {
+    const on = b.dataset.mode === 'expl' ? explodeGoal === 1 : b.dataset.mode === mode;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  applyLook(); kick();
+}
+document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+/* camera fly-to */
+let fly = null;
+function flyTo(pos, target){
+  if (reduce) { camera.position.copy(pos); controls.target.copy(target); kick(); return; }
+  fly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos, t1: target, t: 0 }; kick();
+}
+function focus(key){
+  const g = groups[key]; const b = new THREE.Box3().setFromObject(g); const c = b.getCenter(new THREE.Vector3());
+  const r = Math.max(0.35, b.getSize(new THREE.Vector3()).length() * 0.5);
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  flyTo(c.clone().add(dir.multiplyScalar(r * 3.2 + 0.6)), c);
+}
+
+/* inspector + part buttons */
+const order = ['motor', 'coupling', 'pump', 'suction', 'discharge', 'panel', 'skid'];
+const btns = {};
+order.forEach(k => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = DATA[k].name; b.setAttribute('aria-pressed', 'false');
+  b.addEventListener('click', () => select(selected === k ? null : k)); partsBar.appendChild(b); btns[k] = b;
+});
+const all = document.createElement('button'); all.type = 'button'; all.textContent = 'Overview';
+all.addEventListener('click', () => { select(null); flyTo(HOME.pos.clone(), HOME.target.clone()); }); partsBar.appendChild(all);
+
+function renderInspector(){
+  if (!selected) {
+    inspector.innerHTML = '<h3>PS-120 packaged pump skid</h3><p>Click a part in the model or pick one above to see what it does and its key specifications. Representative concept, values illustrative.</p>' +
+      '<dl class="spec"><div><dt>Duty</dt><dd>120 m³/h at 45 m</dd></div><div><dt>Motor</dt><dd>22 kW · IE3</dd></div><div><dt>Footprint</dt><dd>2.6 × 1.1 m</dd></div><div><dt>Dry weight</dt><dd>1,000 kg</dd></div></dl>';
+    return;
+  }
+  const d = DATA[selected];
+  const h = document.createElement('h3'); h.textContent = d.name;
+  const p = document.createElement('p'); p.textContent = d.blurb;
+  const dl = document.createElement('dl'); dl.className = 'spec';
+  d.spec.forEach(([k, v]) => { const w = document.createElement('div'); const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); dd.textContent = v; w.append(dt, dd); dl.appendChild(w); });
+  inspector.replaceChildren(h, p, dl);
+}
+function select(k){
+  selected = k;
+  order.forEach(o => btns[o].setAttribute('aria-pressed', o === k ? 'true' : 'false'));
+  renderInspector(); applyLook();
+  if (k) { controls.autoRotate = false; focus(k); }
+  kick();
+}
+renderInspector();
+
+/* picking */
+const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2(); let down = null;
+renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(meshes.filter(m => m.visible), false)[0];
+  if (!hit) { select(null); return; }
+  let o = hit.object; while (o && !o.userData.key) o = o.parent;
+  if (o) select(o.userData.key);
+});
+
+/* resize, theme, visibility */
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); kick();
+}
+new ResizeObserver(resize).observe(stage); resize();
+function retheme(){ makeGrid(); lineMat.color.set(css('--accent')); hiCache.forEach(m => m.emissive.set(css('--signal'))); kick(); }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme);
+new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) kick(); }).observe(stage);
+controls.addEventListener('change', kick);
+
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function tick(){
+  requestAnimationFrame(tick);
+  if (!visible) return;
+  const busy = controls.autoRotate || fly || explodeT !== explodeGoal;
+  if (!busy && frames <= 0) return;
+  frames--;
+  if (explodeT !== explodeGoal) {
+    explodeT += Math.sign(explodeGoal - explodeT) * 0.03;
+    if (Math.abs(explodeT - explodeGoal) < 0.03) explodeT = explodeGoal;
+  }
+  const e = ease(explodeT);
+  order.forEach(k => { const o = OFF[k]; groups[k].position.set(o[0] * e, o[1] * e, o[2] * e); });
+  if (fly) {
+    fly.t = Math.min(1, fly.t + 0.025); const t = ease(fly.t);
+    camera.position.lerpVectors(fly.p0, fly.p1, t); controls.target.lerpVectors(fly.t0, fly.t1, t);
+    if (fly.t >= 1) fly = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+kick(); tick();
+</script>
+
+<script>
+/* When opened inside the portfolio's demo window, links back to the portfolio close that window instead. */
+(function(){
+  if (window.parent === window) return;
+  document.querySelectorAll('a[href^="../index.html"]').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    try { window.parent.postMessage({ type: 'rr-close-demo', hash: a.getAttribute('href').split('#')[1] || '' }, '*'); } catch (err) {}
+  }));
+})();
+</script>
+</body></html>

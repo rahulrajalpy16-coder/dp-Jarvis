@@ -1,0 +1,13 @@
+{
+  "name": "Rahul Raj",
+  "short_name": "Rahul Raj",
+  "description": "Websites, AI workflow automation, interactive 3D and apps by Rahul Raj, based in the UAE.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#F2EEE5",
+  "theme_color": "#F2EEE5",
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
